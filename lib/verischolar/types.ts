@@ -112,6 +112,7 @@ export type AnalysisResult = {
   conflicts: ConflictEntry[];
   researchGaps: string[];
   confidenceNotes: string[];
+  validateGapSearch: string[];
   citations: string[];
   confidenceLabel: ConfidenceLabel;
   model: string;

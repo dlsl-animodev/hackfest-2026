@@ -169,6 +169,16 @@ export const geminiAnalysisPayloadSchema = z
             z.array(z.string().min(1)).min(1),
         ),
 
+        // Next search if the user wants to validate the gap
+        validateGapSearch: z.preprocess(
+            (val) => {
+                if (typeof val === "string") return [val];
+                if (Array.isArray(val)) return val;
+                return ["No validation search generated."];
+            },
+            z.array(z.string().min(1))
+        ),
+
         // Same pattern as researchGaps
         confidenceNotes: z.preprocess(
             (val) => {
@@ -205,6 +215,7 @@ export const analysisResultSchema = z
         synthesis: z.string().min(1),
         conflicts: z.array(conflictEntrySchema),
         researchGaps: z.array(z.string().min(1)),
+        validateGapSearch: z.array(z.string()),
         confidenceNotes: z.array(z.string().min(1)),
         citations: z.array(z.string().min(1)),
         confidenceLabel: confidenceLabelSchema,
@@ -249,3 +260,4 @@ export const methodologyNotesSchema = z.array(
         methodologyNote: z.string().min(1),
     }),
 );
+
