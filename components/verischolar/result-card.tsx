@@ -43,9 +43,31 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
         <p className="text-sm leading-7 text-[var(--muted)]">
           {venueLine || "Venue metadata incomplete"}
         </p>
-        <p className="line-clamp-4 text-sm leading-7 text-[color:rgba(71,58,47,0.88)]">
-          {source.abstract ?? "Abstract unavailable from live metadata."}
-        </p>
+        {source.summary ? (
+          <div className="rounded-[1.1rem] border border-[var(--line)] bg-[rgba(255,252,245,0.72)] p-3">
+            <p className="text-[0.72rem] tracking-[0.16em] text-[var(--muted)] uppercase">
+              Summary
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[color:rgba(53,41,32,0.92)]">
+              {source.summary}
+            </p>
+          </div>
+        ) : (
+          <p className="line-clamp-4 text-sm leading-7 text-[color:rgba(71,58,47,0.88)]">
+            {source.abstract ?? "Abstract unavailable from live metadata."}
+          </p>
+        )}
+
+        {source.keyFinding ? (
+          <div className="rounded-[1.1rem] border border-[rgba(182,131,67,0.28)] bg-[rgba(255,245,229,0.72)] p-3">
+            <p className="text-[0.72rem] tracking-[0.16em] text-[color:rgba(117,76,36,0.9)] uppercase">
+              Key finding
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[color:rgba(62,45,31,0.95)]">
+              {source.keyFinding}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">

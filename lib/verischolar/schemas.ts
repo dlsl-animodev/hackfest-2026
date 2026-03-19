@@ -79,6 +79,8 @@ export const researchSourceSchema = z
     authors: z.array(z.string()),
     year: z.number().int().nullable(),
     abstract: z.string().nullable(),
+    summary: z.string().nullable(),
+    keyFinding: z.string().nullable(),
     doi: z.string().nullable(),
     url: z.string().url().nullable(),
     journal: z.string().nullable(),
