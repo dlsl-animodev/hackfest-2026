@@ -1,8 +1,4 @@
-import {
-  ArrowUpIcon,
-  PinIcon,
-  SparkIcon,
-} from "@/components/verischolar/icons";
+import { ArrowUpIcon } from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
 
 type PromptComposerProps = {
@@ -15,22 +11,24 @@ export function PromptComposer({
   compact = false,
 }: PromptComposerProps) {
   return (
-    <div className={compact ? "space-y-4" : "space-y-8"}>
+    <div className={compact ? "space-y-0" : "space-y-8"}>
       <form
         action="/"
         method="get"
         className={`composer-shell relative overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] ${
-          compact ? "px-4 py-4 sm:px-5" : "px-4 py-4 sm:px-6 sm:py-5"
+          compact ? "px-4 py-3 sm:px-5" : "px-4 py-4 sm:px-6 sm:py-5"
         } shadow-[var(--shadow-soft)] backdrop-blur-xl transition-all duration-500`}
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(189,145,86,0.14),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(114,137,96,0.09),transparent_30%)]" />
         <div className="relative space-y-4">
           <textarea
             name="q"
-            rows={compact ? 3 : 4}
+            rows={compact ? 1 : 4}
             defaultValue={initialQuery}
             placeholder="Describe your research problem, target population, or what needs verification."
-            className="w-full resize-none border-none bg-transparent pr-12 text-[1rem] leading-8 text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.08rem]"
+            className={`w-full resize-none border-none bg-transparent pr-12 text-[1rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.08rem] ${
+              compact ? "leading-7" : "leading-8"
+            }`}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -47,7 +45,7 @@ export function PromptComposer({
         </div>
       </form>
 
-      <SuggestionChips compact={compact} />
+      {!compact ? <SuggestionChips compact={compact} /> : null}
     </div>
   );
 }
