@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 import { ArrowUpIcon } from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
 
@@ -10,6 +14,22 @@ export function PromptComposer({
   initialQuery = "",
   compact = false,
 }: PromptComposerProps) {
+  const [expanded, setExpanded] = useState(!compact);
+
+  if (compact && !expanded) {
+    return (
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="inline-flex h-10 items-center justify-center rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.9)] px-5 text-sm font-medium text-[var(--ink)] shadow-[var(--shadow-soft)] transition-transform duration-300 hover:-translate-y-0.5"
+        >
+          Search
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className={compact ? "space-y-0" : "space-y-8"}>
       <form
@@ -32,7 +52,17 @@ export function PromptComposer({
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]"></div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
+              {compact ? (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  className="rounded-full border border-[var(--line)] px-3 py-1 text-xs"
+                >
+                  Hide
+                </button>
+              ) : null}
+            </div>
 
             <button
               type="submit"
