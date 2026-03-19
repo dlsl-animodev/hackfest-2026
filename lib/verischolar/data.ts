@@ -1200,14 +1200,21 @@ export const getSearchResponse = cache(async (query: string): Promise<SearchResp
 
   const searchTerm = expandedQuery ?? rawQuery;
   let candidates: NormalizedCandidate[] = [];
+  const semanticScholarApiKey = getSemanticScholarApiKey();
 
-  try {
-    const semanticScholarResults = await fetchSemanticScholarResults(searchTerm);
-    candidates = await Promise.all(
-      semanticScholarResults.map((paper) => normalizeSemanticScholarPaper(paper)),
+  if (semanticScholarApiKey) {
+    try {
+      const semanticScholarResults = await fetchSemanticScholarResults(searchTerm);
+      candidates = await Promise.all(
+        semanticScholarResults.map((paper) => normalizeSemanticScholarPaper(paper)),
+      );
+    } catch (error) {
+      warnings.add(toWarningMessage(error, "Semantic Scholar", true));
+    }
+  } else {
+    warnings.add(
+      "Semantic Scholar API key is not configured, so VeriScholar is using OpenAlex-first live search for now.",
     );
-  } catch (error) {
-    warnings.add(toWarningMessage(error, "Semantic Scholar", true));
   }
 
   try {
