@@ -43,7 +43,7 @@ export function PromptComposer({
         <div className="relative space-y-4">
           <textarea
             name="q"
-            rows={compact ? 1 : 4}
+            rows={compact ? 1 : 3}
             defaultValue={initialQuery}
             placeholder="Describe your research problem, target population, or what needs verification."
             className={`w-full resize-none border-none bg-transparent pr-12 text-[1rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.08rem] ${

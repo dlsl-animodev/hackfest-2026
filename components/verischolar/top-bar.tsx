@@ -20,7 +20,7 @@ export function TopBar() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
+        {/* <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item}
@@ -30,16 +30,7 @@ export function TopBar() {
               {item}
             </Link>
           ))}
-        </nav>
-
-        <div className="hidden items-center gap-3 sm:flex">
-          <span className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
-            Prompt-first research
-          </span>
-          <span className="rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-medium tracking-[0.12em] text-[var(--bg)] uppercase">
-            Credibility atelier
-          </span>
-        </div>
+        </nav> */}
       </div>
     </header>
   );
