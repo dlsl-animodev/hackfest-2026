@@ -7,7 +7,10 @@ import { AnalysisPanel } from "@/components/verischolar/analysis-panel";
 import { ResearchBoard } from "@/components/verischolar/research-board";
 import { ResultCard } from "@/components/verischolar/result-card";
 import { INITIAL_ANALYSIS_ACTION_STATE } from "@/lib/verischolar/action-state";
-import { buildCitationExport, getDashboardMetrics } from "@/lib/verischolar/citations";
+import {
+  buildCitationExport,
+  getDashboardMetrics,
+} from "@/lib/verischolar/citations";
 import type { ResearchSource, SearchResponse } from "@/lib/verischolar/types";
 
 type WorkspaceClientProps = {
@@ -33,7 +36,14 @@ function sameSelection(left: string[], right: string[]) {
 }
 
 export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
-  const { query, sources, expandedQuery, overallFindingsSummary, fromCache, warnings } = searchResponse;
+  const {
+    query,
+    sources,
+    expandedQuery,
+    overallFindingsSummary,
+    fromCache,
+    warnings,
+  } = searchResponse;
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
     getInitialSelection(sources),
   );
@@ -44,14 +54,18 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   const [copied, setCopied] = useState(false);
   const [, startBoardTransition] = useTransition();
 
-  const selectedSources = sources.filter((source) => selectedIds.includes(source.id));
+  const selectedSources = sources.filter((source) =>
+    selectedIds.includes(source.id),
+  );
   const metrics = getDashboardMetrics(selectedSources);
   const citationExport = buildCitationExport(selectedSources);
   const isStale =
     analysisState.status === "success" &&
     !sameSelection(analysisState.selectedSourceIds, selectedIds);
   const insightsLabel =
-    sources.length === 0 ? "No results yet" : `${sources.length} ranked sources`;
+    sources.length === 0
+      ? "No results yet"
+      : `${sources.length} ranked sources`;
 
   function toggleSource(sourceId: string) {
     startBoardTransition(() => {

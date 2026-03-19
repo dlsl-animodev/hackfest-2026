@@ -10,8 +10,8 @@ import {
 } from "@/lib/verischolar/env";
 import {
   expandQueryWithGemini,
-  generateMethodologyNotes,
   generateOverallFindingsSummary,
+  generateSourceInsights,
 } from "@/lib/verischolar/gemini";
 import {
   ACADEMIC_VENUE_HINTS,
@@ -180,7 +180,9 @@ function normalizeTitle(title: string | null | undefined) {
 }
 
 function uniqueStrings(values: Array<string | null | undefined>) {
-  return [...new Set(values.map((value) => value?.trim()).filter(Boolean))] as string[];
+  return [
+    ...new Set(values.map((value) => value?.trim()).filter(Boolean)),
+  ] as string[];
 }
 
 function encodeOpenAlexIdentifier(identifier: string) {
@@ -199,7 +201,9 @@ function getOpenAlexUrl(path: string) {
 }
 
 function getCrossrefUrl(doi: string) {
-  const url = new URL(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+  const url = new URL(
+    `https://api.crossref.org/works/${encodeURIComponent(doi)}`,
+  );
   const mailto = getCrossrefMailto();
 
   if (mailto) {
@@ -312,7 +316,9 @@ function rebuildAbstract(index: Record<string, number[]> | undefined) {
   }
 
   const tokens = Object.entries(index)
-    .flatMap(([word, positions]) => positions.map((position) => [position, word] as const))
+    .flatMap(([word, positions]) =>
+      positions.map((position) => [position, word] as const),
+    )
     .sort((left, right) => left[0] - right[0])
     .map((entry) => entry[1]);
 
@@ -321,38 +327,6 @@ function rebuildAbstract(index: Record<string, number[]> | undefined) {
   }
 
   return tokens.join(" ");
-}
-
-function truncateSentence(text: string, maxLength = 240) {
-  if (text.length <= maxLength) {
-    return text;
-  }
-
-  return `${text.slice(0, maxLength).trimEnd()}…`;
-}
-
-function deriveSummaryAndFinding(abstract: string | null) {
-  if (!abstract) {
-    return {
-      summary: null,
-      keyFinding: null,
-    };
-  }
-
-  const sentences = abstract
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-
-  const summary = sentences[0] ? truncateSentence(sentences[0]) : null;
-  const keyFinding = sentences.find((sentence, index) => index > 0 && sentence.length > 32)
-    ?? sentences[1]
-    ?? null;
-
-  return {
-    summary,
-    keyFinding: keyFinding ? truncateSentence(keyFinding) : null,
-  };
 }
 
 function getOpenAlexAuthors(work: OpenAlexWork) {
@@ -402,7 +376,9 @@ function hasRetractionRelation(relation: Record<string, unknown> | undefined) {
   });
 }
 
-function getRetractionStatusFromCrossref(message: CrossrefWorkMessage | undefined) {
+function getRetractionStatusFromCrossref(
+  message: CrossrefWorkMessage | undefined,
+) {
   const updates = [
     ...(message?.["update-to"] ?? []),
     ...(message?.["updated-by"] ?? []),
@@ -430,7 +406,9 @@ function getRetractionStatusFromCrossref(message: CrossrefWorkMessage | undefine
   };
 }
 
-async function getCrossrefStatus(doi: string | null): Promise<CrossrefStatus | null> {
+async function getCrossrefStatus(
+  doi: string | null,
+): Promise<CrossrefStatus | null> {
   const normalizedDoi = normalizeDoi(doi);
 
   if (!normalizedDoi) {
@@ -441,7 +419,9 @@ async function getCrossrefStatus(doi: string | null): Promise<CrossrefStatus | n
 
   if (cached) {
     const payload =
-      typeof cached.payload === "object" && cached.payload ? cached.payload : null;
+      typeof cached.payload === "object" && cached.payload
+        ? cached.payload
+        : null;
     const publisher =
       payload && "publisher" in payload && typeof payload.publisher === "string"
         ? payload.publisher
@@ -607,7 +587,8 @@ function getLocality({
   if (countryCodes.includes("PH")) {
     return {
       localityLabel: "Local" as const,
-      localReason: "OpenAlex affiliation metadata includes a Philippine country code.",
+      localReason:
+        "OpenAlex affiliation metadata includes a Philippine country code.",
     };
   }
 
@@ -620,14 +601,16 @@ function getLocality({
   ) {
     return {
       localityLabel: "Local" as const,
-      localReason: "Author affiliations match a checked Philippine institution keyword.",
+      localReason:
+        "Author affiliations match a checked Philippine institution keyword.",
     };
   }
 
   if (matchPhilippineJournal(journal)) {
     return {
       localityLabel: "Local" as const,
-      localReason: "Journal metadata matches the checked-in Philippine journal registry.",
+      localReason:
+        "Journal metadata matches the checked-in Philippine journal registry.",
     };
   }
 
@@ -639,20 +622,28 @@ function getLocality({
   ) {
     return {
       localityLabel: "Local" as const,
-      localReason: "The source URL resolves to a Philippine academic or government domain.",
+      localReason:
+        "The source URL resolves to a Philippine academic or government domain.",
     };
   }
 
-  if (countryCodes.length > 0 || affiliations.length > 0 || journal || hostname) {
+  if (
+    countryCodes.length > 0 ||
+    affiliations.length > 0 ||
+    journal ||
+    hostname
+  ) {
     return {
       localityLabel: "Foreign" as const,
-      localReason: "No Philippine affiliation, venue, or domain signal was detected in the available metadata.",
+      localReason:
+        "No Philippine affiliation, venue, or domain signal was detected in the available metadata.",
     };
   }
 
   return {
     localityLabel: "Unknown" as const,
-    localReason: "There is not enough affiliation or venue metadata to classify this source confidently.",
+    localReason:
+      "There is not enough affiliation or venue metadata to classify this source confidently.",
   };
 }
 
@@ -720,8 +711,14 @@ function mergeCandidates(
     journal: existing.journal ?? incoming.journal,
     publisher: existing.publisher ?? incoming.publisher,
     citationCount: existing.citationCount ?? incoming.citationCount,
-    affiliations: uniqueStrings([...existing.affiliations, ...incoming.affiliations]),
-    countryCodes: uniqueStrings([...existing.countryCodes, ...incoming.countryCodes]),
+    affiliations: uniqueStrings([
+      ...existing.affiliations,
+      ...incoming.affiliations,
+    ]),
+    countryCodes: uniqueStrings([
+      ...existing.countryCodes,
+      ...incoming.countryCodes,
+    ]),
     retractionStatus:
       scoreRetractionStatus(existing.retractionStatus) >=
       scoreRetractionStatus(incoming.retractionStatus)
@@ -807,7 +804,8 @@ function buildCredibility({
       label: "Venue risk",
       value: "Predatory pattern match",
       effect: "negative",
-      reason: "The venue or publisher matches the checked-in predatory watchlist.",
+      reason:
+        "The venue or publisher matches the checked-in predatory watchlist.",
     });
   } else if (predatoryStatus === "Clear") {
     scoreInputs.push({
@@ -821,7 +819,8 @@ function buildCredibility({
       label: "Venue risk",
       value: "Unknown",
       effect: "neutral",
-      reason: "Venue risk could not be checked because publisher metadata was incomplete.",
+      reason:
+        "Venue risk could not be checked because publisher metadata was incomplete.",
     });
   }
 
@@ -850,7 +849,8 @@ function buildCredibility({
       label: "Citation momentum",
       value: "Emerging",
       effect: "negative",
-      reason: "Citation support is still limited, so this source needs corroboration.",
+      reason:
+        "Citation support is still limited, so this source needs corroboration.",
     });
   } else {
     scoreInputs.push({
@@ -883,7 +883,8 @@ function buildCredibility({
       label: "Recency",
       value: "Archive",
       effect: "negative",
-      reason: "The work is older and should be balanced with more recent evidence.",
+      reason:
+        "The work is older and should be balanced with more recent evidence.",
     });
   } else {
     scoreInputs.push({
@@ -922,7 +923,8 @@ function buildCredibility({
       label: "Journal quality",
       value: "Unknown",
       effect: "neutral",
-      reason: "Journal quality could not be classified with the available metadata.",
+      reason:
+        "Journal quality could not be classified with the available metadata.",
     });
   }
 
@@ -931,7 +933,8 @@ function buildCredibility({
       label: "Metadata completeness",
       value: `Missing ${missingFields.join(", ")}`,
       effect: "neutral",
-      reason: "Some citation fields are incomplete and should be reviewed before final submission.",
+      reason:
+        "Some citation fields are incomplete and should be reviewed before final submission.",
     });
   }
 
@@ -979,10 +982,20 @@ function buildCredibility({
 
 function toResearchSource(
   candidate: NormalizedCandidate,
-  methodologyNote: string | null,
+  {
+    summary,
+    keyFinding,
+    methodologyNote,
+  }: {
+    summary: string | null;
+    keyFinding: string | null;
+    methodologyNote: string | null;
+  },
 ): ResearchSource {
-  const { summary, keyFinding } = deriveSummaryAndFinding(candidate.abstract);
-  const predatoryStatus = matchPredatoryVenue(candidate.journal, candidate.publisher);
+  const predatoryStatus = matchPredatoryVenue(
+    candidate.journal,
+    candidate.publisher,
+  );
   const locality = getLocality({
     affiliations: candidate.affiliations,
     countryCodes: candidate.countryCodes,
@@ -1082,7 +1095,8 @@ async function normalizeSemanticScholarPaper(paper: SemanticScholarPaper) {
   ]);
 
   const openAlexAbstract = rebuildAbstract(openAlex?.abstract_inverted_index);
-  const openAlexJournal = openAlex?.primary_location?.source?.display_name ?? null;
+  const openAlexJournal =
+    openAlex?.primary_location?.source?.display_name ?? null;
 
   return {
     sourceProvider: "Semantic Scholar" as const,
@@ -1133,7 +1147,9 @@ async function normalizeOpenAlexWork(work: OpenAlexWork) {
     sourceProvider: "OpenAlex" as const,
     paperId: null,
     openAlexId: work.id ?? null,
-    title: normalizeWhitespace(work.display_name ?? work.title ?? "Untitled source"),
+    title: normalizeWhitespace(
+      work.display_name ?? work.title ?? "Untitled source",
+    ),
     authors: getOpenAlexAuthors(work),
     year: work.publication_year ?? null,
     abstract: rebuildAbstract(work.abstract_inverted_index),
@@ -1213,169 +1229,192 @@ export function getSelectionHash(query: string, ids: string[]) {
     .digest("hex");
 }
 
-export const getSearchResponse = cache(async (query: string): Promise<SearchResponse> => {
-  const rawQuery = query.trim();
+export const getSearchResponse = cache(
+  async (query: string): Promise<SearchResponse> => {
+    const rawQuery = query.trim();
 
-  if (!rawQuery) {
-    return {
-      query,
-      expandedQuery: null,
-      overallFindingsSummary: null,
-      sources: [],
-      fromCache: false,
-      warnings: [],
-    };
-  }
+    if (!rawQuery) {
+      return {
+        query,
+        expandedQuery: null,
+        overallFindingsSummary: null,
+        sources: [],
+        fromCache: false,
+        warnings: [],
+      };
+    }
 
-  const normalized = normalizeQuery(rawQuery);
-  const cachedResponse = await readQueryCache(normalized);
+    const normalized = normalizeQuery(rawQuery);
+    const cachedResponse = await readQueryCache(normalized);
 
-  if (cachedResponse) {
-    const cachedWarnings = new Set(cachedResponse.warnings);
-    let overallFindingsSummary = cachedResponse.overallFindingsSummary;
+    if (cachedResponse) {
+      const cachedWarnings = new Set(cachedResponse.warnings);
+      let overallFindingsSummary = cachedResponse.overallFindingsSummary;
+
+      try {
+        overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
+          query: rawQuery,
+          sources: cachedResponse.sources,
+        });
+      } catch {
+        cachedWarnings.add(
+          "AI overall findings summary is unavailable for this cache hit, so only per-source summaries are shown.",
+        );
+      }
+
+      return {
+        ...cachedResponse,
+        query: rawQuery,
+        overallFindingsSummary,
+        fromCache: true,
+        warnings: [...cachedWarnings],
+      };
+    }
+
+    const warnings = new Set<string>();
+    let expandedQuery: string | null = null;
+
+    try {
+      const expansion = await expandQueryWithGemini(rawQuery);
+
+      if (expansion) {
+        expandedQuery = expansion.expandedQuery;
+      } else {
+        warnings.add(
+          "Gemini query expansion is unavailable, so the raw research question was used.",
+        );
+      }
+    } catch {
+      warnings.add(
+        "Gemini query expansion failed, so the raw research question was used.",
+      );
+    }
+
+    const searchTerm = expandedQuery ?? rawQuery;
+    let candidates: NormalizedCandidate[] = [];
+    const semanticScholarApiKey = getSemanticScholarApiKey();
+
+    if (semanticScholarApiKey) {
+      try {
+        const semanticScholarResults =
+          await fetchSemanticScholarResults(searchTerm);
+        candidates = await Promise.all(
+          semanticScholarResults.map((paper) =>
+            normalizeSemanticScholarPaper(paper),
+          ),
+        );
+      } catch (error) {
+        warnings.add(toWarningMessage(error, "Semantic Scholar", true));
+      }
+    } else {
+      warnings.add(
+        "Semantic Scholar API key is not configured, so VeriScholar is using OpenAlex-first live search for now.",
+      );
+    }
+
+    try {
+      if (candidates.length < 10) {
+        const openAlexResults = await fetchOpenAlexSearch(searchTerm);
+        const normalizedOpenAlex = await Promise.all(
+          openAlexResults.map((work) => normalizeOpenAlexWork(work)),
+        );
+        candidates = dedupeCandidates([...candidates, ...normalizedOpenAlex]);
+
+        if (candidates.length > 0 && normalizedOpenAlex.length > 0) {
+          warnings.add(
+            "OpenAlex metadata was used to enrich results and fill gaps in provider coverage.",
+          );
+        }
+      }
+    } catch (error) {
+      warnings.add(toWarningMessage(error, "OpenAlex"));
+    }
+
+    const uniqueCandidates = dedupeCandidates(candidates).slice(0, 12);
+    let sources = uniqueCandidates.map((candidate) =>
+      toResearchSource(candidate, {
+        summary: null,
+        keyFinding: null,
+        methodologyNote: null,
+      }),
+    );
+
+    try {
+      const sourceInsightsResult = await generateSourceInsights({
+        sources: uniqueCandidates.map((candidate) => ({
+          sourceId: buildSourceId(candidate),
+          title: candidate.title,
+          abstract: candidate.abstract,
+        })),
+      });
+
+      if (sourceInsightsResult) {
+        sources = uniqueCandidates.map((candidate) => {
+          const sourceId = buildSourceId(candidate);
+          const insight = sourceInsightsResult.insightsBySourceId[sourceId];
+
+          return toResearchSource(candidate, {
+            summary: insight?.summary ?? null,
+            keyFinding: insight?.keyFinding ?? null,
+            methodologyNote: insight?.methodologyNote ?? null,
+          });
+        });
+      } else {
+        warnings.add(
+          "Gemini source insights are unavailable, so per-source Summary and Key finding are hidden for this run.",
+        );
+      }
+    } catch {
+      warnings.add(
+        "Gemini source insights failed, so per-source Summary and Key finding are hidden for this run.",
+      );
+    }
+
+    sources = sortSources(sources);
+
+    if (sources.length === 0) {
+      warnings.add(
+        "No live sources were returned for this query. Try a broader phrasing or check provider limits.",
+      );
+    }
+
+    let overallFindingsSummary: string | null = null;
 
     try {
       overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
         query: rawQuery,
-        sources: cachedResponse.sources,
+        sources,
       });
-    } catch {
-      cachedWarnings.add(
-        "AI overall findings summary is unavailable for this cache hit, so only per-source summaries are shown.",
-      );
-    }
 
-    return {
-      ...cachedResponse,
-      query: rawQuery,
-      overallFindingsSummary,
-      fromCache: true,
-      warnings: [...cachedWarnings],
-    };
-  }
-
-  const warnings = new Set<string>();
-  let expandedQuery: string | null = null;
-
-  try {
-    const expansion = await expandQueryWithGemini(rawQuery);
-
-    if (expansion) {
-      expandedQuery = expansion.expandedQuery;
-    } else {
-      warnings.add(
-        "Gemini query expansion is unavailable, so the raw research question was used.",
-      );
-    }
-  } catch {
-    warnings.add(
-      "Gemini query expansion failed, so the raw research question was used.",
-    );
-  }
-
-  const searchTerm = expandedQuery ?? rawQuery;
-  let candidates: NormalizedCandidate[] = [];
-  const semanticScholarApiKey = getSemanticScholarApiKey();
-
-  if (semanticScholarApiKey) {
-    try {
-      const semanticScholarResults = await fetchSemanticScholarResults(searchTerm);
-      candidates = await Promise.all(
-        semanticScholarResults.map((paper) => normalizeSemanticScholarPaper(paper)),
-      );
-    } catch (error) {
-      warnings.add(toWarningMessage(error, "Semantic Scholar", true));
-    }
-  } else {
-    warnings.add(
-      "Semantic Scholar API key is not configured, so VeriScholar is using OpenAlex-first live search for now.",
-    );
-  }
-
-  try {
-    if (candidates.length < 10) {
-      const openAlexResults = await fetchOpenAlexSearch(searchTerm);
-      const normalizedOpenAlex = await Promise.all(
-        openAlexResults.map((work) => normalizeOpenAlexWork(work)),
-      );
-      candidates = dedupeCandidates([...candidates, ...normalizedOpenAlex]);
-
-      if (candidates.length > 0 && normalizedOpenAlex.length > 0) {
+      if (
+        !overallFindingsSummary &&
+        sources.some((source) => source.abstract)
+      ) {
         warnings.add(
-          "OpenAlex metadata was used to enrich results and fill gaps in provider coverage.",
+          "AI overall findings summary is unavailable for this run, so only per-source summaries are shown.",
         );
       }
-    }
-  } catch (error) {
-    warnings.add(toWarningMessage(error, "OpenAlex"));
-  }
-
-  const uniqueCandidates = dedupeCandidates(candidates).slice(0, 12);
-  let sources = uniqueCandidates.map((candidate) => toResearchSource(candidate, null));
-
-  try {
-    const methodologyResult = await generateMethodologyNotes(sources);
-
-    if (methodologyResult) {
-      sources = uniqueCandidates.map((candidate) => {
-        const sourceId = buildSourceId(candidate);
-        return toResearchSource(
-          candidate,
-          methodologyResult.notesBySourceId[sourceId] ?? null,
-        );
-      });
-    } else {
+    } catch {
       warnings.add(
-        "Gemini methodology notes are unavailable, so sources only show metadata-based credibility signals.",
+        "AI overall findings summary failed for this run, so only per-source summaries are shown.",
       );
     }
-  } catch {
-    warnings.add(
-      "Gemini methodology notes failed, so sources only show metadata-based credibility signals.",
-    );
-  }
 
-  sources = sortSources(sources);
-
-  if (sources.length === 0) {
-    warnings.add(
-      "No live sources were returned for this query. Try a broader phrasing or check provider limits.",
-    );
-  }
-
-  let overallFindingsSummary: string | null = null;
-
-  try {
-    overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
+    const response = {
       query: rawQuery,
+      expandedQuery,
+      overallFindingsSummary,
       sources,
-    });
+      fromCache: false,
+      warnings: [...warnings],
+    } satisfies SearchResponse;
 
-    if (!overallFindingsSummary && sources.some((source) => source.abstract)) {
-      warnings.add(
-        "AI overall findings summary is unavailable for this run, so only per-source summaries are shown.",
-      );
-    }
-  } catch {
-    warnings.add(
-      "AI overall findings summary failed for this run, so only per-source summaries are shown.",
-    );
-  }
+    await writeQueryCache(response);
+    await Promise.all(response.sources.map((source) => writeWorkCache(source)));
 
-  const response = {
-    query: rawQuery,
-    expandedQuery,
-    overallFindingsSummary,
-    sources,
-    fromCache: false,
-    warnings: [...warnings],
-  } satisfies SearchResponse;
-
-  await writeQueryCache(response);
-  await Promise.all(response.sources.map((source) => writeWorkCache(source)));
-
-  return response;
-});
+    return response;
+  },
+);
 
 export const getSearchResults = cache(async (query: string) => {
   const response = await getSearchResponse(query);

@@ -131,31 +131,41 @@ export const analysisResultSchema = z
 export const geminiAnalysisPayloadSchema = z
   .object({
     synthesis: z.string().min(1),
-    conflicts: z.array(conflictEntrySchema), 
+    conflicts: z.array(conflictEntrySchema),
     // Wrap researchGaps if Gemini sends a plain string instead of an array
-    researchGaps: z.preprocess((val) => {
-      if (typeof val === 'string') return [val];
-      if (Array.isArray(val)) return val;
-      return ["No specific gaps identified."]; // Fallback
-    }, z.array(z.string().min(1)).min(1)),
+    researchGaps: z.preprocess(
+      (val) => {
+        if (typeof val === "string") return [val];
+        if (Array.isArray(val)) return val;
+        return ["No specific gaps identified."]; // Fallback
+      },
+      z.array(z.string().min(1)).min(1),
+    ),
     // Wrap confidenceNotes if Gemini sends a plain string
-    confidenceNotes: z.preprocess((val) => {
-      if (typeof val === 'string') return [val];
-      if (Array.isArray(val)) return val;
-      return ["No confidence notes provided."]; // Fallback
-    }, z.array(z.string().min(1)).min(1)),
+    confidenceNotes: z.preprocess(
+      (val) => {
+        if (typeof val === "string") return [val];
+        if (Array.isArray(val)) return val;
+        return ["No confidence notes provided."]; // Fallback
+      },
+      z.array(z.string().min(1)).min(1),
+    ),
     // Forgiving Enum matching for the label
-    confidenceLabel: z.preprocess((val) => {
-      if (typeof val !== 'string') return "Needs verification"; // Safe default
-      
-      const normalized = val.trim().toLowerCase();
-      
-      if (normalized.includes("high")) return "High signal";
-      if (normalized.includes("moderate") || normalized.includes("medium")) return "Moderate signal";
-      
-      // If it says "need", "low", or invents a totally new word, default to the safest option
-      return "Needs verification"; 
-    }, z.enum(["High signal", "Moderate signal", "Needs verification"])),
+    confidenceLabel: z.preprocess(
+      (val) => {
+        if (typeof val !== "string") return "Needs verification"; // Safe default
+
+        const normalized = val.trim().toLowerCase();
+
+        if (normalized.includes("high")) return "High signal";
+        if (normalized.includes("moderate") || normalized.includes("medium"))
+          return "Moderate signal";
+
+        // If it says "need", "low", or invents a totally new word, default to the safest option
+        return "Needs verification";
+      },
+      z.enum(["High signal", "Moderate signal", "Needs verification"]),
+    ),
   })
   .strict();
 
@@ -182,6 +192,17 @@ export const overallFindingsSummarySchema = z
     overallFindingsSummary: z.string().min(1),
   })
   .strict();
+
+export const sourceInsightsSchema = z.array(
+  z
+    .object({
+      sourceId: z.string().min(1),
+      summary: z.string().min(1),
+      keyFinding: z.string().min(1),
+      methodologyNote: z.string().min(1),
+    })
+    .strict(),
+);
 
 export const methodologyNotesSchema = z.array(
   z
