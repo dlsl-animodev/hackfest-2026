@@ -71,6 +71,8 @@ export type ResearchSource = {
   authors: string[];
   year: number | null;
   abstract: string | null;
+  summary: string | null;
+  keyFinding: string | null;
   doi: string | null;
   url: string | null;
   journal: string | null;

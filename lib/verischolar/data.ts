@@ -319,6 +319,38 @@ function rebuildAbstract(index: Record<string, number[]> | undefined) {
   return tokens.join(" ");
 }
 
+function truncateSentence(text: string, maxLength = 240) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength).trimEnd()}…`;
+}
+
+function deriveSummaryAndFinding(abstract: string | null) {
+  if (!abstract) {
+    return {
+      summary: null,
+      keyFinding: null,
+    };
+  }
+
+  const sentences = abstract
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  const summary = sentences[0] ? truncateSentence(sentences[0]) : null;
+  const keyFinding = sentences.find((sentence, index) => index > 0 && sentence.length > 32)
+    ?? sentences[1]
+    ?? null;
+
+  return {
+    summary,
+    keyFinding: keyFinding ? truncateSentence(keyFinding) : null,
+  };
+}
+
 function getOpenAlexAuthors(work: OpenAlexWork) {
   return uniqueStrings(
     (work.authorships ?? []).map(
@@ -945,6 +977,7 @@ function toResearchSource(
   candidate: NormalizedCandidate,
   methodologyNote: string | null,
 ): ResearchSource {
+  const { summary, keyFinding } = deriveSummaryAndFinding(candidate.abstract);
   const predatoryStatus = matchPredatoryVenue(candidate.journal, candidate.publisher);
   const locality = getLocality({
     affiliations: candidate.affiliations,
@@ -965,6 +998,8 @@ function toResearchSource(
     authors: candidate.authors,
     year: candidate.year,
     abstract: candidate.abstract,
+    summary,
+    keyFinding,
     doi: normalizeDoi(candidate.doi),
     url: candidate.url,
     journal: candidate.journal,
