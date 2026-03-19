@@ -1,4 +1,8 @@
-import { ArrowUpIcon, PinIcon, SparkIcon } from "@/components/verischolar/icons";
+import {
+  ArrowUpIcon,
+  PinIcon,
+  SparkIcon,
+} from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
 
 type PromptComposerProps = {
@@ -30,16 +34,7 @@ export function PromptComposer({
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.88)] px-3 py-2">
-                <PinIcon className="h-4 w-4 text-[var(--accent)]" />
-                Philippines-aware matching
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.88)] px-3 py-2">
-                <SparkIcon className="h-4 w-4 text-[var(--accent)]" />
-                Contradiction-first synthesis
-              </span>
-            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]"></div>
 
             <button
               type="submit"
