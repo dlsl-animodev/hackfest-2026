@@ -31,7 +31,7 @@ function HeroShell() {
         </div>
 
         <div className="mt-10 space-y-6">
-          <p className="text-sm tracking-[0.28em] text-[var(--muted)] uppercase">
+          <p className="text-sm font-bold tracking-[0.28em] text-[var(--muted)] uppercase">
             Research, reinvented
           </p>
           <h1 className="type-display text-[3rem] leading-[1.05] text-[var(--ink)] sm:text-[4rem] lg:text-[5rem]">
@@ -40,10 +40,17 @@ function HeroShell() {
             for you today?
           </h1>
           <p className="mx-auto max-w-2xl text-base leading-8 text-[color:rgba(82,67,56,0.86)] sm:text-lg">
-            VeriScholar is a credibility-first research atelier for thesis teams,
-            RRL writers, and hackathon finalists who need faster discovery
-            without losing academic rigor.
+            VeriScholar is a credibility-first research atelier for thesis
+            teams, RRL writers, and hackathon finalists who need faster
+            discovery without losing academic rigor.
           </p>
+          <span className="hidden sm:inline-flex rounded-full border border-[var(--line)] px-3 py-1.5 text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
+            Prompt-first research
+          </span>
+
+          <span className="hidden sm:inline-flex rounded-full bg-[var(--ink)] px-4 py-2 text-xs font-medium tracking-[0.12em] text-[var(--bg)] uppercase">
+            Credibility atelier
+          </span>
         </div>
 
         <div className="mt-10">
