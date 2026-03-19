@@ -176,7 +176,7 @@ export const geminiAnalysisPayloadSchema = z
                 if (Array.isArray(val)) return val;
                 return ["No validation search generated."];
             },
-            z.array(z.string().min(1))
+            z.array(z.string().min(1)),
         ),
 
         // Same pattern as researchGaps
@@ -261,3 +261,8 @@ export const methodologyNotesSchema = z.array(
     }),
 );
 
+export const gapEvaluationSchema = z.object({
+    gapAddressed: z.boolean(),
+    explanation: z.string().min(1),
+    resolvingSourceIds: z.array(z.string()),
+}).strict();
