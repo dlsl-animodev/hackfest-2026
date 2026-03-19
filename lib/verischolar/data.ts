@@ -329,6 +329,39 @@ function rebuildAbstract(index: Record<string, number[]> | undefined) {
   return tokens.join(" ");
 }
 
+function truncateSentence(text: string, maxLength = 240) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength).trimEnd()}…`;
+}
+
+function deriveSummaryAndFindingFromAbstract(abstract: string | null) {
+  if (!abstract) {
+    return {
+      summary: null,
+      keyFinding: null,
+    };
+  }
+
+  const sentences = abstract
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+
+  const summary = sentences[0] ? truncateSentence(sentences[0]) : null;
+  const keyFinding =
+    sentences.find((sentence, index) => index > 0 && sentence.length > 32) ??
+    sentences[1] ??
+    null;
+
+  return {
+    summary,
+    keyFinding: keyFinding ? truncateSentence(keyFinding) : null,
+  };
+}
+
 function getOpenAlexAuthors(work: OpenAlexWork) {
   return uniqueStrings(
     (work.authorships ?? []).map(
@@ -1352,21 +1385,48 @@ export const getSearchResponse = cache(
         sources = uniqueCandidates.map((candidate) => {
           const sourceId = buildSourceId(candidate);
           const insight = sourceInsightsResult.insightsBySourceId[sourceId];
+          const fallback = deriveSummaryAndFindingFromAbstract(
+            candidate.abstract,
+          );
 
           return toResearchSource(candidate, {
-            summary: insight?.summary ?? null,
-            keyFinding: insight?.keyFinding ?? null,
+            summary: insight?.summary ?? fallback.summary,
+            keyFinding: insight?.keyFinding ?? fallback.keyFinding,
             methodologyNote: insight?.methodologyNote ?? null,
           });
         });
       } else {
+        sources = uniqueCandidates.map((candidate) => {
+          const fallback = deriveSummaryAndFindingFromAbstract(
+            candidate.abstract,
+          );
+
+          return toResearchSource(candidate, {
+            summary: fallback.summary,
+            keyFinding: fallback.keyFinding,
+            methodologyNote: null,
+          });
+        });
+
         warnings.add(
-          "Gemini source insights are unavailable, so per-source Summary and Key finding are hidden for this run.",
+          "Gemini source insights are unavailable, so per-source Summary and Key finding were generated with abstract slicing fallback.",
         );
       }
     } catch {
+      sources = uniqueCandidates.map((candidate) => {
+        const fallback = deriveSummaryAndFindingFromAbstract(
+          candidate.abstract,
+        );
+
+        return toResearchSource(candidate, {
+          summary: fallback.summary,
+          keyFinding: fallback.keyFinding,
+          methodologyNote: null,
+        });
+      });
+
       warnings.add(
-        "Gemini source insights failed, so per-source Summary and Key finding are hidden for this run.",
+        "Gemini source insights failed, so per-source Summary and Key finding were generated with abstract slicing fallback.",
       );
     }
 

@@ -8,7 +8,11 @@ import {
   researchSourceSchema,
   searchResponseSchema,
 } from "@/lib/verischolar/schemas";
-import type { AnalysisResult, ResearchSource, SearchResponse } from "@/lib/verischolar/types";
+import type {
+  AnalysisResult,
+  ResearchSource,
+  SearchResponse,
+} from "@/lib/verischolar/types";
 
 let cachedClient: SupabaseClient | null | undefined;
 const QUERY_CACHE_VERSION = "v3";
@@ -80,7 +84,9 @@ export async function writeQueryCache(response: SearchResponse) {
 
   await supabase.from("query_cache").upsert(
     {
-      normalized_query: getVersionedQueryKey(response.query.trim().toLowerCase()),
+      normalized_query: getVersionedQueryKey(
+        response.query.trim().toLowerCase(),
+      ),
       query: response.query,
       expanded_query: response.expandedQuery,
       payload: response.sources,
