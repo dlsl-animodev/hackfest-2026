@@ -81,6 +81,8 @@ async function SearchExperience({ searchParams }: PageProps) {
   const query = getQueryValue(params.q);
 
   if (!query) {
+    // HeroShell is the default view when no query is provided, prompting users to enter a research question.  
+    // This keeps the experience engaging and guides users on how to get started.
     return <HeroShell />;
   }
 

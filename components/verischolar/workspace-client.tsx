@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 
 import { analyzeBoardAction } from "@/app/actions";
 import { AnalysisPanel } from "@/components/verischolar/analysis-panel";
@@ -12,6 +12,8 @@ import {
   getDashboardMetrics,
 } from "@/lib/verischolar/citations";
 import type { ResearchSource, SearchResponse } from "@/lib/verischolar/types";
+
+import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
 
 type WorkspaceClientProps = {
   searchResponse: SearchResponse;
@@ -53,6 +55,13 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   );
   const [copied, setCopied] = useState(false);
   const [, startBoardTransition] = useTransition();
+
+  // Zustand store for storing the analysisState
+  const setGlobalAnalysisState = useAnalysisStateStore((state) => state.setAnalysisState);
+  // Sync local analysisState with global Zustand store
+  useEffect(() => {
+    setGlobalAnalysisState(analysisState);
+  }, [analysisState, setGlobalAnalysisState]);
 
   const selectedSources = sources.filter((source) =>
     selectedIds.includes(source.id),
