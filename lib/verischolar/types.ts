@@ -122,6 +122,7 @@ export type AnalysisResult = {
 export type SearchResponse = {
   query: string;
   expandedQuery: string | null;
+  overallFindingsSummary: string | null;
   sources: ResearchSource[];
   fromCache: boolean;
   warnings: string[];

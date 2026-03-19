@@ -33,7 +33,7 @@ function sameSelection(left: string[], right: string[]) {
 }
 
 export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
-  const { query, sources, expandedQuery, fromCache, warnings } = searchResponse;
+  const { query, sources, expandedQuery, overallFindingsSummary, fromCache, warnings } = searchResponse;
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
     getInitialSelection(sources),
   );
@@ -93,6 +93,17 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
               {fromCache ? "Supabase cache hit" : "Live provider fetch"}
             </span>
           </div>
+
+          {overallFindingsSummary ? (
+            <div className="mt-4 rounded-[1rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-3 py-2.5">
+              <p className="text-xs tracking-[0.14em] text-[var(--muted)] uppercase">
+                Overall findings summary
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[color:rgba(82,67,56,0.9)]">
+                {overallFindingsSummary}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

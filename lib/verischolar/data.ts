@@ -8,7 +8,11 @@ import {
   getOpenAlexMailto,
   getSemanticScholarApiKey,
 } from "@/lib/verischolar/env";
-import { expandQueryWithGemini, generateMethodologyNotes } from "@/lib/verischolar/gemini";
+import {
+  expandQueryWithGemini,
+  generateMethodologyNotes,
+  generateOverallFindingsSummary,
+} from "@/lib/verischolar/gemini";
 import {
   ACADEMIC_VENUE_HINTS,
   PHILIPPINE_DOMAIN_HINTS,
@@ -1184,6 +1188,25 @@ function toWarningMessage(
   return `${provider} was unavailable during this request.`;
 }
 
+async function generateOverallFindingsSummaryForQuery({
+  query,
+  sources,
+}: {
+  query: string;
+  sources: ResearchSource[];
+}) {
+  if (sources.length === 0) {
+    return null;
+  }
+
+  const result = await generateOverallFindingsSummary({
+    query,
+    sources,
+  });
+
+  return result?.overallFindingsSummary ?? null;
+}
+
 export function getSelectionHash(query: string, ids: string[]) {
   return createHash("sha256")
     .update(`${normalizeQuery(query)}::${[...ids].sort().join("|")}`)
@@ -1197,6 +1220,7 @@ export const getSearchResponse = cache(async (query: string): Promise<SearchResp
     return {
       query,
       expandedQuery: null,
+      overallFindingsSummary: null,
       sources: [],
       fromCache: false,
       warnings: [],
@@ -1207,10 +1231,26 @@ export const getSearchResponse = cache(async (query: string): Promise<SearchResp
   const cachedResponse = await readQueryCache(normalized);
 
   if (cachedResponse) {
+    const cachedWarnings = new Set(cachedResponse.warnings);
+    let overallFindingsSummary = cachedResponse.overallFindingsSummary;
+
+    try {
+      overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
+        query: rawQuery,
+        sources: cachedResponse.sources,
+      });
+    } catch {
+      cachedWarnings.add(
+        "AI overall findings summary is unavailable for this cache hit, so only per-source summaries are shown.",
+      );
+    }
+
     return {
       ...cachedResponse,
       query: rawQuery,
+      overallFindingsSummary,
       fromCache: true,
+      warnings: [...cachedWarnings],
     };
   }
 
@@ -1303,9 +1343,29 @@ export const getSearchResponse = cache(async (query: string): Promise<SearchResp
     );
   }
 
+  let overallFindingsSummary: string | null = null;
+
+  try {
+    overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
+      query: rawQuery,
+      sources,
+    });
+
+    if (!overallFindingsSummary && sources.some((source) => source.abstract)) {
+      warnings.add(
+        "AI overall findings summary is unavailable for this run, so only per-source summaries are shown.",
+      );
+    }
+  } catch {
+    warnings.add(
+      "AI overall findings summary failed for this run, so only per-source summaries are shown.",
+    );
+  }
+
   const response = {
     query: rawQuery,
     expandedQuery,
+    overallFindingsSummary,
     sources,
     fromCache: false,
     warnings: [...warnings],

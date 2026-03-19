@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
     geminiAnalysisPayloadSchema,
     methodologyNotesSchema,
+    overallFindingsSummarySchema,
     queryExpansionSchema,
 } from "@/lib/verischolar/schemas";
 import type { AnalysisResult, ResearchSource } from "@/lib/verischolar/types";
@@ -196,6 +197,52 @@ export async function generateMethodologyNotes(sources: ResearchSource[]) {
         notesBySourceId: Object.fromEntries(
             result.data.map((entry) => [entry.sourceId, entry.methodologyNote]),
         ),
+    };
+}
+
+export async function generateOverallFindingsSummary({
+    query,
+    sources,
+}: {
+    query: string;
+    sources: ResearchSource[];
+}) {
+    const eligibleSources = sources
+        .filter((source) => source.abstract)
+        .slice(0, 10)
+        .map((source) => ({
+            sourceId: source.id,
+            title: source.title,
+            year: source.year,
+            abstract: source.abstract,
+        }));
+
+    if (eligibleSources.length === 0) {
+        return null;
+    }
+
+    const result = await callGeminiJson({
+        prompt: [
+            "You are an academic synthesis assistant writing one query-level findings summary.",
+            "Read all provided abstracts and produce one concise synthesis paragraph (3-5 sentences).",
+            "Paraphrase the evidence and do not copy or quote abstract sentences verbatim.",
+            "Do not invent evidence beyond the provided abstracts.",
+            "Mention where evidence appears mixed or uncertain.",
+            "Return JSON with key overallFindingsSummary.",
+            `Query: ${query}`,
+            JSON.stringify(eligibleSources),
+        ].join("\n"),
+        schema: overallFindingsSummarySchema,
+        temperature: 0.2,
+    });
+
+    if (!result) {
+        return null;
+    }
+
+    return {
+        model: result.model,
+        overallFindingsSummary: result.data.overallFindingsSummary,
     };
 }
 

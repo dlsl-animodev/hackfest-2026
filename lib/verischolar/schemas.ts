@@ -163,6 +163,7 @@ export const searchResponseSchema = z
   .object({
     query: z.string().min(1),
     expandedQuery: z.string().nullable(),
+    overallFindingsSummary: z.string().nullable().optional().default(null),
     sources: z.array(researchSourceSchema),
     fromCache: z.boolean(),
     warnings: z.array(z.string()),
@@ -173,6 +174,12 @@ export const queryExpansionSchema = z
   .object({
     expandedQuery: z.string().min(1),
     rationale: z.string().min(1),
+  })
+  .strict();
+
+export const overallFindingsSummarySchema = z
+  .object({
+    overallFindingsSummary: z.string().min(1),
   })
   .strict();
 
