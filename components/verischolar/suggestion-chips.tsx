@@ -7,22 +7,40 @@ const SUGGESTIONS = [
 
 type SuggestionChipsProps = {
   compact?: boolean;
+  onSelectSuggestion?: (query: string) => void;
 };
 
-export function SuggestionChips({ compact = false }: SuggestionChipsProps) {
+export function SuggestionChips({
+  compact = false,
+  onSelectSuggestion,
+}: SuggestionChipsProps) {
   return (
     <div
-      className={`flex flex-wrap items-center justify-center gap-3 ${
-        compact ? "justify-start" : ""
+      className={`grid gap-2.5 ${
+        compact
+          ? "grid-cols-1 justify-start"
+          : "mx-auto w-full max-w-[860px] sm:grid-cols-2"
       }`}
     >
       {SUGGESTIONS.map((suggestion) => (
-        <form key={suggestion} action="/" method="get">
+        <form
+          key={suggestion}
+          action={onSelectSuggestion ? undefined : "/"}
+          method={onSelectSuggestion ? undefined : "get"}
+          onSubmit={(event) => {
+            if (!onSelectSuggestion) {
+              return;
+            }
+
+            event.preventDefault();
+            onSelectSuggestion(suggestion);
+          }}
+        >
           <button
             type="submit"
-            name="q"
+            name={onSelectSuggestion ? undefined : "q"}
             value={suggestion}
-            className="rounded-full border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-2.5 text-sm text-[var(--muted)] shadow-[0_18px_40px_rgba(119,93,64,0.07)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
+            className="w-full rounded-full border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-2.5 text-sm text-[var(--muted)] shadow-[0_16px_34px_rgba(119,93,64,0.06)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--line-strong)] hover:text-[var(--ink)]"
           >
             {suggestion}
           </button>
