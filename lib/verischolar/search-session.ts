@@ -26,6 +26,28 @@ export const SEARCH_ACTIVITY_STAGES = [
 export type SearchActivityStageId =
   (typeof SEARCH_ACTIVITY_STAGES)[number]["id"];
 
+function normalizeSearchKey(query: string) {
+  const normalized = query
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+
+  return normalized || "query";
+}
+
+export function buildHydratedSearchId(query: string) {
+  return `hydrated-search-${normalizeSearchKey(query)}`;
+}
+
+export function buildHydratedTurnId(
+  role: "user" | "assistant",
+  query: string,
+) {
+  return `hydrated-${role}-${normalizeSearchKey(query)}`;
+}
+
 type BaseTurn = {
   id: string;
   searchId: string;

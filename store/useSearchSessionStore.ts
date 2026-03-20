@@ -4,6 +4,8 @@ import { create } from "zustand";
 
 import {
   SEARCH_ACTIVITY_STAGES,
+  buildHydratedSearchId,
+  buildHydratedTurnId,
   type PendingSearchMetadata,
   type SearchActivityStageId,
   type SearchAssistantCompletedTurn,
@@ -38,6 +40,16 @@ function buildUserTurn(query: string, searchId: string, createdAt: number) {
   } satisfies SearchUserTurn;
 }
 
+function buildHydratedUserTurn(query: string, createdAt: number) {
+  return {
+    id: buildHydratedTurnId("user", query),
+    searchId: buildHydratedSearchId(query),
+    query,
+    createdAt,
+    role: "user",
+  } satisfies SearchUserTurn;
+}
+
 function buildPendingAssistantTurn(
   query: string,
   searchId: string,
@@ -53,15 +65,14 @@ function buildPendingAssistantTurn(
   } satisfies SearchAssistantPendingTurn;
 }
 
-function buildCompletedAssistantTurn(
+function buildHydratedCompletedAssistantTurn(
   query: string,
-  searchId: string,
   createdAt: number,
   response: SearchResponse,
 ) {
   return {
-    id: createId("assistant-turn"),
-    searchId,
+    id: buildHydratedTurnId("assistant", query),
+    searchId: buildHydratedSearchId(query),
     query,
     createdAt,
     role: "assistant",
@@ -172,11 +183,9 @@ export const useSearchSessionStore = create<SearchSessionStore>((set) => ({
       }
 
       const createdAt = Date.now();
-      const searchId = createId("search");
-      const userTurn = buildUserTurn(response.query, searchId, createdAt);
-      const assistantTurn = buildCompletedAssistantTurn(
+      const userTurn = buildHydratedUserTurn(response.query, createdAt);
+      const assistantTurn = buildHydratedCompletedAssistantTurn(
         response.query,
-        searchId,
         createdAt,
         response,
       );
