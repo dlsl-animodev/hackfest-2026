@@ -3,6 +3,8 @@
 import { getSearchResponse } from "@/lib/verischolar/data";
 import { evaluateIfGapAddressed } from "@/lib/verischolar/gemini";
 import type { SearchResponse } from "@/lib/verischolar/types";
+import { generateBoardAnalysis } from "@/lib/verischolar/gemini";
+import type { ResearchSource } from "@/lib/verischolar/types";
 
 export type AgentStepResult = {
     queryUsed: string;
@@ -32,5 +34,21 @@ export async function runAgentStep(
         queryUsed: query,
         searchResponse,
         evaluation,
+    };
+}
+
+export async function getNextIterationGaps(
+    query: string,
+    sources: ResearchSource[],
+) {
+    const analysis = await generateBoardAnalysis({
+        query,
+        sources,
+        citations: [], 
+    });
+
+    return {
+        researchGaps: analysis.researchGaps,
+        validateGapSearch: analysis.validateGapSearch,
     };
 }
