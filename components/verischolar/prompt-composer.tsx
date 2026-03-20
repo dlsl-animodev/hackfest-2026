@@ -54,18 +54,18 @@ export function PromptComposer({
   }
 
   return (
-    <div className={compact ? "space-y-0" : "space-y-6"}>
+    <div className={compact ? "space-y-0" : "space-y-4"}>
       <form
         ref={formRef}
         action={onSubmitQuery ? undefined : "/"}
         method={onSubmitQuery ? undefined : "get"}
         onSubmit={handleSubmit}
         className={`composer-shell relative overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] ${
-          compact ? "px-4 py-3 sm:px-5" : "px-4 py-3.5 sm:px-5 sm:py-4"
+          compact ? "px-4 py-3 sm:px-5" : "px-4 py-3 sm:px-5 sm:py-3.5"
         } shadow-[var(--shadow-soft)] backdrop-blur-xl transition-all duration-500`}
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(189,145,86,0.14),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(114,137,96,0.09),transparent_30%)]" />
-        <div className="relative space-y-4">
+        <div className="relative space-y-3.5">
           <textarea
             name="q"
             rows={1}
@@ -74,24 +74,24 @@ export function PromptComposer({
             onKeyDown={handleKeyDown}
             enterKeyHint="search"
             placeholder="Describe your research problem, target population, or what needs verification."
-            className={`w-full resize-none border-none bg-transparent pr-12 text-[1rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.08rem] ${
+            className={`w-full resize-none border-none bg-transparent pr-12 text-[0.94rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1rem] ${
               compact
-                ? "max-h-28 min-h-[3rem] leading-7"
-                : "max-h-28 min-h-[3.65rem] leading-7"
+                ? "max-h-24 min-h-[2.85rem] leading-6"
+                : "max-h-24 min-h-[3.05rem] leading-6"
             }`}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.74)] px-3 py-1.5 text-xs tracking-[0.14em] uppercase">
+              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.74)] px-3 py-1.5 text-[0.68rem] tracking-[0.14em] uppercase">
                 {compact ? "Continue the thread" : "Ask a research question"}
               </span>
               {isPending ? (
-                <span className="rounded-full border border-[rgba(162,119,79,0.2)] bg-[rgba(255,245,232,0.82)] px-3 py-1.5 text-xs text-[var(--accent)]">
+                <span className="rounded-full border border-[rgba(162,119,79,0.2)] bg-[rgba(255,245,232,0.82)] px-3 py-1.5 text-[0.7rem] text-[var(--accent)]">
                   Search in progress
                 </span>
               ) : (
-                <span className="text-xs text-[color:rgba(120,102,85,0.84)]">
+                <span className="text-[0.72rem] text-[color:rgba(120,102,85,0.84)]">
                   Enter to send, Shift+Enter for newline
                 </span>
               )}
@@ -100,7 +100,7 @@ export function PromptComposer({
             <button
               type="submit"
               disabled={!query.trim() || isPending}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-[0_16px_40px_rgba(32,20,12,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-[0_14px_34px_rgba(32,20,12,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label={
                 isPending
                   ? "Research search is in progress"

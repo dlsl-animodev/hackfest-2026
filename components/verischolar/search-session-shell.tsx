@@ -131,8 +131,8 @@ export function SearchSessionShell({
 
   return (
     <section
-      className={`mx-auto flex w-full flex-1 flex-col px-4 pt-4 sm:px-6 lg:px-10 ${
-        hasConversation ? "pb-36" : "pb-14"
+      className={`mx-auto flex w-full flex-1 flex-col px-4 pt-3 sm:px-6 lg:px-10 ${
+        hasConversation ? "pb-32" : "pb-6"
       }`}
     >
       <div className="mx-auto flex w-full max-w-[1120px] flex-1 flex-col">
@@ -149,11 +149,11 @@ export function SearchSessionShell({
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex min-h-[calc(100vh-9rem)] w-full max-w-[960px] flex-col gap-6">
-            <div className="flex flex-1 items-center justify-center pb-4">
+          <div className="mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-[1120px] flex-col justify-end gap-4">
+            <div className="flex flex-1 items-center justify-center pb-2">
               <ChatHeroState />
             </div>
-            <div className="rounded-[1.85rem] border border-[rgba(118,96,72,0.14)] bg-[rgba(255,250,244,0.66)] p-3 shadow-[0_22px_56px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-4">
+            <div className="rounded-[1.75rem] border border-[rgba(118,96,72,0.14)] bg-[rgba(255,250,244,0.66)] p-3 shadow-[0_20px_52px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-3.5">
               <PromptComposer
                 initialQuery={composerQuery}
                 compact={false}
