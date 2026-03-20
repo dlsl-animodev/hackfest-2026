@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { m, useReducedMotion } from "framer-motion";
 
 import { analyzeBoardAction } from "@/app/actions";
 import { AnalysisPanel } from "@/components/verischolar/analysis-panel";
@@ -11,11 +12,13 @@ import {
   buildCitationExport,
   getDashboardMetrics,
 } from "@/lib/verischolar/citations";
+import { getWorkspaceRevealMotion } from "@/lib/verischolar/motion";
 import type { ResearchSource, SearchResponse } from "@/lib/verischolar/types";
 import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
 
 type WorkspaceClientProps = {
   searchResponse: SearchResponse;
+  animateOnMount?: boolean;
 };
 
 function getInitialSelection(sources: ResearchSource[]) {
@@ -36,7 +39,10 @@ function sameSelection(left: string[], right: string[]) {
   return leftSorted.every((value, index) => value === rightSorted[index]);
 }
 
-export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
+export function WorkspaceClient({
+  searchResponse,
+  animateOnMount = false,
+}: WorkspaceClientProps) {
   const {
     query,
     sources,
@@ -54,6 +60,7 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   );
   const [copied, setCopied] = useState(false);
   const [, startBoardTransition] = useTransition();
+  const reduceMotion = useReducedMotion();
   const setGlobalAnalysisState = useAnalysisStateStore(
     (state) => state.setAnalysisState,
   );
@@ -74,6 +81,7 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
     sources.length === 0
       ? "No results yet"
       : `${sources.length} ranked sources`;
+  const workspaceMotion = getWorkspaceRevealMotion(Boolean(reduceMotion));
 
   function toggleSource(sourceId: string) {
     startBoardTransition(() => {
@@ -96,7 +104,11 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   }
 
   return (
-    <section className="space-y-5">
+    <m.section
+      className="space-y-5"
+      initial={animateOnMount ? workspaceMotion.initial : false}
+      animate={workspaceMotion.animate}
+    >
       <div className="grid gap-4 rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-4 shadow-[0_20px_54px_rgba(108,82,54,0.07)] sm:px-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
         <div className="space-y-4">
           <p className="text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
@@ -211,6 +223,6 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
           />
         </aside>
       </div>
-    </section>
+    </m.section>
   );
 }
