@@ -319,6 +319,8 @@ export async function generateBoardAnalysis({
             "Use only the provided source metadata and abstracts.",
             "Do not invent evidence or source IDs.",
             "Every conflict must reference at least one supporting or opposing source ID from the provided list.",
+            "Identify conflicts ONLY if the sources genuinely disagree. If there are no conflicts, leave the 'conflicts' array empty [].",
+            "If you do find a conflict, every conflict must reference at least one supporting or opposing source ID from the provided list.",
             "Keep synthesis concise, evidence-grounded, and useful for a student literature review.",
             "Return JSON with keys synthesis, conflicts, researchGaps, validateGapSearch, confidenceNotes, confidenceLabel.",
             "CRITICAL FORMATTING RULES:",
