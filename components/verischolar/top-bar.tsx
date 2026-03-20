@@ -2,20 +2,18 @@ import Link from "next/link";
 
 import { BrandGlyph } from "@/components/verischolar/icons";
 
-const NAV_ITEMS = ["Product", "Approach", "Workflow", "Pitch"];
-
 export function TopBar() {
   return (
-    <header className="sticky top-0 z-30 px-4 pt-4 sm:px-6 lg:px-10">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.82)] px-5 py-3 shadow-[var(--shadow-soft)] backdrop-blur-xl">
+    <header className="sticky top-0 z-30 px-4 pt-3 sm:px-6 lg:px-10">
+      <div className="mx-auto flex max-w-[1120px] items-center justify-between rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-4 py-2.5 shadow-[var(--shadow-soft)] backdrop-blur-xl sm:px-5">
         <Link
           href="/"
           className="group inline-flex items-center gap-3 text-[0.97rem] font-semibold tracking-[0.18em] text-[var(--ink)] uppercase"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[rgba(255,255,255,0.72)] text-[var(--accent)] shadow-[0_10px_26px_rgba(60,35,14,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5">
-            <BrandGlyph className="h-5 w-5" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[rgba(255,255,255,0.72)] text-[var(--accent)] shadow-[0_10px_26px_rgba(60,35,14,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5">
+            <BrandGlyph className="h-[1.125rem] w-[1.125rem]" />
           </span>
-          <span className="type-display text-[1.08rem] tracking-[0.14em] normal-case">
+          <span className="type-display text-[1rem] tracking-[0.1em] normal-case sm:text-[1.06rem]">
             veriScholar
           </span>
         </Link>

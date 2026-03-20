@@ -12,7 +12,6 @@ import {
   getDashboardMetrics,
 } from "@/lib/verischolar/citations";
 import type { ResearchSource, SearchResponse } from "@/lib/verischolar/types";
-
 import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
 
 type WorkspaceClientProps = {
@@ -55,10 +54,10 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   );
   const [copied, setCopied] = useState(false);
   const [, startBoardTransition] = useTransition();
+  const setGlobalAnalysisState = useAnalysisStateStore(
+    (state) => state.setAnalysisState,
+  );
 
-  // Zustand store for storing the analysisState
-  const setGlobalAnalysisState = useAnalysisStateStore((state) => state.setAnalysisState);
-  // Sync local analysisState with global Zustand store
   useEffect(() => {
     setGlobalAnalysisState(analysisState);
   }, [analysisState, setGlobalAnalysisState]);
@@ -97,16 +96,16 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="grid gap-4 rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,255,255,0.56)] px-5 py-4 shadow-[0_20px_54px_rgba(108,82,54,0.07)] lg:grid-cols-[1.2fr_0.8fr]">
-        <div>
+    <section className="space-y-5">
+      <div className="grid gap-4 rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-4 shadow-[0_20px_54px_rgba(108,82,54,0.07)] sm:px-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
+        <div className="space-y-4">
           <p className="text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
             Query
           </p>
-          <h2 className="mt-3 type-display text-[1.9rem] leading-tight text-[var(--ink)]">
+          <h2 className="type-display max-w-[20ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.9rem]">
             {query}
           </h2>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
             {expandedQuery && expandedQuery !== query ? (
               <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-3 py-1.5">
                 Expanded search: {expandedQuery}
@@ -118,7 +117,7 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
           </div>
 
           {overallFindingsSummary ? (
-            <div className="mt-4 rounded-[1rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-3 py-2.5">
+            <div className="rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-4 py-3">
               <p className="text-xs tracking-[0.14em] text-[var(--muted)] uppercase">
                 Overall findings summary
               </p>
@@ -129,7 +128,7 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
           {[
             { label: "Sources", value: insightsLabel },
             { label: "Pinned", value: `${selectedSources.length} on board` },
@@ -162,36 +161,55 @@ export function WorkspaceClient({ searchResponse }: WorkspaceClientProps) {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.95fr_1fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_340px] xl:items-start">
         <div className="space-y-4">
-          {sources.map((source) => (
-            <ResultCard
-              key={source.id}
-              source={source}
-              selected={selectedIds.includes(source.id)}
-              onToggle={toggleSource}
-            />
-          ))}
+          <div className="flex flex-wrap items-end justify-between gap-3 rounded-[1.5rem] border border-[var(--line)] bg-[rgba(255,255,255,0.5)] px-4 py-4 shadow-[0_18px_48px_rgba(94,68,44,0.05)]">
+            <div>
+              <p className="text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
+                Source library
+              </p>
+              <h3 className="mt-2 type-display text-[1.45rem] leading-tight text-[var(--ink)]">
+                Compare evidence, then pin only what survives scrutiny.
+              </h3>
+            </div>
+            <p className="max-w-[34rem] text-sm leading-6 text-[color:rgba(82,67,56,0.84)]">
+              Results are ranked by credibility, citation momentum, venue
+              quality, and recency so the strongest candidates surface faster.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {sources.map((source) => (
+              <ResultCard
+                key={source.id}
+                source={source}
+                selected={selectedIds.includes(source.id)}
+                onToggle={toggleSource}
+              />
+            ))}
+          </div>
         </div>
 
-        <ResearchBoard
-          selectedSources={selectedSources}
-          localRatio={metrics.ratioLocal}
-          citationExport={citationExport}
-          onToggle={toggleSource}
-          onCopyCitations={copyCitations}
-          copied={copied}
-        />
+        <aside className="space-y-4 xl:sticky xl:top-[6.35rem]">
+          <ResearchBoard
+            selectedSources={selectedSources}
+            localRatio={metrics.ratioLocal}
+            citationExport={citationExport}
+            onToggle={toggleSource}
+            onCopyCitations={copyCitations}
+            copied={copied}
+          />
 
-        <AnalysisPanel
-          query={query}
-          selectedSourceIds={selectedIds}
-          action={analyzeAction}
-          actionState={analysisState}
-          isPending={isAnalyzing}
-          isStale={isStale}
-          metrics={metrics}
-        />
+          <AnalysisPanel
+            query={query}
+            selectedSourceIds={selectedIds}
+            action={analyzeAction}
+            actionState={analysisState}
+            isPending={isAnalyzing}
+            isStale={isStale}
+            metrics={metrics}
+          />
+        </aside>
       </div>
     </section>
   );

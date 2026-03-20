@@ -14,9 +14,9 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
 
   return (
     <article
-      className={`rounded-[1.6rem] border p-5 transition-all duration-300 ${
+      className={`rounded-[1.45rem] border p-4 transition-all duration-300 sm:p-5 ${
         selected
-          ? "border-[var(--line-strong)] bg-[rgba(255,251,243,0.95)] shadow-[0_24px_64px_rgba(94,62,26,0.12)]"
+          ? "border-[var(--line-strong)] bg-[rgba(255,251,243,0.95)] shadow-[0_22px_54px_rgba(94,62,26,0.1)]"
           : "border-[var(--line)] bg-[rgba(255,255,255,0.72)] hover:-translate-y-0.5 hover:border-[var(--line-strong)]"
       }`}
     >
@@ -34,47 +34,45 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
       </div>
 
       <div className="mt-4 space-y-3">
-        <h3 className="type-display text-[1.38rem] leading-8 text-[var(--ink)]">
+        <h3 className="type-display line-clamp-3 text-[1.22rem] leading-[1.28] text-[var(--ink)] sm:text-[1.3rem]">
           {source.title}
         </h3>
-        <p className="text-sm leading-7 text-[var(--muted)]">
+        <p className="line-clamp-2 text-[0.98rem] leading-6 text-[var(--muted)]">
           {source.authors.join(", ") || "Unknown author"}
         </p>
-        <p className="text-sm leading-7 text-[var(--muted)]">
+        <p className="line-clamp-2 text-sm leading-6 text-[var(--muted)]">
           {venueLine || "Venue metadata incomplete"}
         </p>
-        {source.summary ? (
-          <div className="rounded-[1.1rem] border border-[var(--line)] bg-[rgba(255,252,245,0.72)] p-3">
-            <p className="text-[0.72rem] tracking-[0.16em] text-[var(--muted)] uppercase">
-              Summary
+        <div className="grid gap-3">
+          {source.summary ? (
+            <div className="rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.72)] p-3">
+              <p className="text-[0.68rem] tracking-[0.16em] text-[var(--muted)] uppercase">
+                Summary
+              </p>
+              <p className="mt-2 line-clamp-4 text-sm leading-6 text-[color:rgba(53,41,32,0.92)]">
+                {source.summary}
+              </p>
+            </div>
+          ) : (
+            <p className="line-clamp-4 text-sm leading-6 text-[color:rgba(71,58,47,0.88)]">
+              {source.abstract ?? "Abstract unavailable from live metadata."}
             </p>
-            <p className="mt-2 text-sm leading-6 text-[color:rgba(53,41,32,0.92)]">
-              {source.summary}
-            </p>
-          </div>
-        ) : (
-          <p className="line-clamp-4 text-sm leading-7 text-[color:rgba(71,58,47,0.88)]">
-            {source.abstract ?? "Abstract unavailable from live metadata."}
-          </p>
-        )}
+          )}
 
-        {source.keyFinding ? (
-          <div className="rounded-[1.1rem] border border-[rgba(182,131,67,0.28)] bg-[rgba(255,245,229,0.72)] p-3">
-            <p className="text-[0.72rem] tracking-[0.16em] text-[color:rgba(117,76,36,0.9)] uppercase">
-              Key finding
-            </p>
-            <p className="mt-2 text-sm leading-6 text-[color:rgba(62,45,31,0.95)]">
-              {source.keyFinding}
-            </p>
-          </div>
-        ) : null}
+          {source.keyFinding ? (
+            <div className="rounded-[1.05rem] border border-[rgba(182,131,67,0.28)] bg-[rgba(255,245,229,0.72)] p-3">
+              <p className="text-[0.68rem] tracking-[0.16em] text-[color:rgba(117,76,36,0.9)] uppercase">
+                Key finding
+              </p>
+              <p className="mt-2 line-clamp-4 text-sm leading-6 text-[color:rgba(62,45,31,0.95)]">
+                {source.keyFinding}
+              </p>
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-2">
-          <ShieldIcon className="h-4 w-4 text-[var(--accent)]" />
-          {source.credibility.explanations[0]}
-        </span>
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-[0.78rem] text-[var(--muted)]">
         <span className="rounded-full border border-[var(--line)] px-3 py-2">
           {source.citationCount !== null
             ? `${source.citationCount} citations`
@@ -100,12 +98,22 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
         ) : null}
       </div>
 
+      <div className="mt-4 rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.74)] p-3">
+        <p className="text-[0.68rem] tracking-[0.16em] text-[var(--muted)] uppercase">
+          Credibility signal
+        </p>
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-[color:rgba(68,54,42,0.9)]">
+          <ShieldIcon className="mr-2 inline h-4 w-4 text-[var(--accent)]" />
+          {source.credibility.explanations[0]}
+        </p>
+      </div>
+
       {source.credibility.methodologyNote ? (
-        <div className="mt-4 rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.82)] p-3 text-sm leading-6 text-[color:rgba(68,54,42,0.9)]">
-          <p className="text-xs tracking-[0.14em] text-[var(--muted)] uppercase">
-            Abstract-based methodology note
+        <div className="mt-4 rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.82)] p-3 text-sm leading-6 text-[color:rgba(68,54,42,0.9)]">
+          <p className="text-[0.68rem] tracking-[0.14em] text-[var(--muted)] uppercase">
+            Methodology note
           </p>
-          <p className="mt-2">{source.credibility.methodologyNote}</p>
+          <p className="mt-2 line-clamp-3">{source.credibility.methodologyNote}</p>
         </div>
       ) : null}
 
