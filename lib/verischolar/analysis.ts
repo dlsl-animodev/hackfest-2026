@@ -2,7 +2,7 @@ import "server-only";
 
 import { buildApaCitation } from "@/lib/verischolar/citations";
 import { getSelectionHash } from "@/lib/verischolar/data";
-import { generateBoardAnalysis } from "@/lib/verischolar/gemini";
+import { generateBoardAnalysis } from "@/lib/verischolar/ai";
 import { readAnalysisCache, writeAnalysisCache } from "@/lib/verischolar/supabase";
 import type { AnalysisResult, ResearchSource } from "@/lib/verischolar/types";
 
