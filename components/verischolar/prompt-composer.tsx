@@ -10,6 +10,7 @@ import {
 
 import { ArrowUpIcon } from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
+import { ArrowRightIcon } from "lucide-react";
 
 type PromptComposerProps = {
   initialQuery?: string;
@@ -60,7 +61,7 @@ export function PromptComposer({
         action={onSubmitQuery ? undefined : "/"}
         method={onSubmitQuery ? undefined : "get"}
         onSubmit={handleSubmit}
-        className={`composer-shell relative overflow-hidden rounded-[2rem] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] ${
+        className={`composer-shell relative overflow-hidden rounded-[1rem] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] ${
           compact ? "px-4 py-3 sm:px-5" : "px-4 py-3 sm:px-5 sm:py-3.5"
         } shadow-[var(--shadow-soft)] backdrop-blur-xl transition-all duration-500`}
       >

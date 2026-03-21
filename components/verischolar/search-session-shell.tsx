@@ -204,7 +204,7 @@ export function SearchSessionShell({
     >
       <div
         className={`mx-auto flex w-full flex-1 flex-col ${
-          hasConversation ? "max-w-[920px]" : "max-w-[1120px]"
+          hasConversation ? "max-w-[1000px]" : "max-w-[1120px]"
         }`}
       >
         {hasConversation ? (
@@ -270,7 +270,7 @@ export function SearchSessionShell({
 
       {hasConversation ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 px-4 pb-4 sm:px-6 lg:px-10 lg:pr-[27rem]">
-          <div className="mx-auto w-full max-w-[920px]">
+          <div className="mx-auto w-full max-w-[1000px]">
             <div className="pointer-events-auto rounded-[1.9rem] border border-[rgba(118,96,72,0.16)] bg-[rgba(246,240,231,0.82)] p-2.5 shadow-[0_-22px_70px_rgba(91,64,35,0.12)] backdrop-blur-2xl sm:p-3">
               <PromptComposer
                 initialQuery={composerQuery}
