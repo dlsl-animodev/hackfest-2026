@@ -1,4 +1,9 @@
-import { BookIcon, CopyIcon, GlobeIcon, ShieldIcon } from "@/components/verischolar/icons";
+import {
+  BookIcon,
+  CopyIcon,
+  GlobeIcon,
+  ShieldIcon,
+} from "@/components/verischolar/icons";
 import type { ResearchSource } from "@/lib/verischolar/types";
 
 type ResearchBoardProps = {
