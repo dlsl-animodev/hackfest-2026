@@ -62,8 +62,4 @@ export const ACADEMIC_VENUE_HINTS = [
   "transactions",
 ];
 
-export const PHILIPPINE_DOMAIN_HINTS = [
-  ".edu.ph",
-  ".gov.ph",
-  ".org.ph",
-];
+export const PHILIPPINE_DOMAIN_HINTS = [".edu.ph", ".gov.ph", ".org.ph"];
