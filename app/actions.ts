@@ -34,7 +34,8 @@ export async function analyzeBoardAction(
   if (selectedIds.length < 3) {
     return {
       status: "error",
-      message: "Select at least three sources to generate a reliable synthesis.",
+      message:
+        "Select at least three sources to generate a reliable synthesis.",
       analysis: null,
       selectedSourceIds: selectedIds,
       workplaceSessionId: null,

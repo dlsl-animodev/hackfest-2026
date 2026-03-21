@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { TopBar } from "@/components/verischolar/top-bar";
+import { WorkplaceValidationSection } from "@/components/verischolar/workplace-validation-section";
 import { readWorkplaceSession } from "@/lib/verischolar/supabase";
 
 type WorkplaceSessionPageProps = {
@@ -60,7 +61,8 @@ export default async function WorkplaceSessionPage({
               {session.analysis.synthesis}
             </p>
             <p className="mt-3 text-xs text-[var(--muted)]">
-              Generated {new Date(session.analysis.generatedAt).toLocaleString()}
+              Generated{" "}
+              {new Date(session.analysis.generatedAt).toLocaleString()}
             </p>
           </div>
 
@@ -86,10 +88,12 @@ export default async function WorkplaceSessionPage({
                         {conflict.claim}
                       </p>
                       <p className="mt-2 text-xs text-[var(--muted)]">
-                        Supporting: {conflict.supportingSourceIds.join(", ") || "None"}
+                        Supporting:{" "}
+                        {conflict.supportingSourceIds.join(", ") || "None"}
                       </p>
                       <p className="mt-1 text-xs text-[var(--muted)]">
-                        Opposing: {conflict.opposingSourceIds.join(", ") || "None"}
+                        Opposing:{" "}
+                        {conflict.opposingSourceIds.join(", ") || "None"}
                       </p>
                     </div>
                   ))
@@ -126,23 +130,22 @@ export default async function WorkplaceSessionPage({
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.9)] px-4 py-3">
-            <p className="text-sm text-[var(--muted)]">
-              Session {session.sessionId} • {session.selectedSourceIds.length} sources
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/validate-gap"
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-2.5 text-sm text-[var(--bg)]"
-              >
-                Validate gap with other sources
-              </Link>
-              <Link
-                href={`/?q=${encodeURIComponent(session.query)}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,255,255,0.8)] px-4 py-2.5 text-sm text-[var(--ink)]"
-              >
-                Back to search board
-              </Link>
+          <div className="mt-5 space-y-4">
+            <WorkplaceValidationSection analysis={session.analysis} />
+
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.9)] px-4 py-3">
+              <p className="text-sm text-[var(--muted)]">
+                Session {session.sessionId} • {session.selectedSourceIds.length}{" "}
+                sources
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/?q=${encodeURIComponent(session.query)}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,255,255,0.8)] px-4 py-2.5 text-sm text-[var(--ink)]"
+                >
+                  Back to search board
+                </Link>
+              </div>
             </div>
           </div>
         </section>

@@ -255,7 +255,9 @@ export async function writeWorkplaceSession({
   });
 }
 
-export async function readWorkplaceSession(sessionId: string): Promise<WorkplaceSession | null> {
+export async function readWorkplaceSession(
+  sessionId: string,
+): Promise<WorkplaceSession | null> {
   const supabase = getSupabaseAdminClient();
 
   if (!supabase) {
@@ -264,7 +266,9 @@ export async function readWorkplaceSession(sessionId: string): Promise<Workplace
 
   const { data, error } = await supabase
     .from("workplace_sessions")
-    .select("session_id, query, selected_source_ids, analysis_payload, created_at")
+    .select(
+      "session_id, query, selected_source_ids, analysis_payload, created_at",
+    )
     .eq("session_id", sessionId)
     .maybeSingle();
 
