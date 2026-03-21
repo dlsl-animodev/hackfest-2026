@@ -7,11 +7,13 @@ import {
   analysisResultSchema,
   researchSourceSchema,
   searchResponseSchema,
+  workplaceSessionSchema,
 } from "@/lib/verischolar/schemas";
 import type {
   AnalysisResult,
   ResearchSource,
   SearchResponse,
+  WorkplaceSession,
 } from "@/lib/verischolar/types";
 
 let cachedClient: SupabaseClient | null | undefined;
@@ -224,6 +226,63 @@ export async function writeAnalysisCache({
       onConflict: "selection_hash",
     },
   );
+}
+
+export async function writeWorkplaceSession({
+  sessionId,
+  query,
+  selectedSourceIds,
+  analysis,
+}: {
+  sessionId: string;
+  query: string;
+  selectedSourceIds: string[];
+  analysis: AnalysisResult;
+}) {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    return;
+  }
+
+  await supabase.from("workplace_sessions").insert({
+    session_id: sessionId,
+    query,
+    selected_source_ids: selectedSourceIds,
+    analysis_payload: analysis,
+    created_at: getIsoNow(),
+    updated_at: getIsoNow(),
+  });
+}
+
+export async function readWorkplaceSession(sessionId: string): Promise<WorkplaceSession | null> {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("workplace_sessions")
+    .select("session_id, query, selected_source_ids, analysis_payload, created_at")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const parsed = workplaceSessionSchema.safeParse({
+    sessionId: data.session_id,
+    query: data.query,
+    selectedSourceIds: Array.isArray(data.selected_source_ids)
+      ? data.selected_source_ids
+      : [],
+    analysis: data.analysis_payload,
+    createdAt: data.created_at,
+  });
+
+  return parsed.success ? parsed.data : null;
 }
 
 export function validateCachedSource(value: unknown) {

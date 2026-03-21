@@ -1,8 +1,11 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { analyzeResearchBoard } from "@/lib/verischolar/analysis";
 import type { AnalysisActionState } from "@/lib/verischolar/action-state";
 import { getSelectedSources } from "@/lib/verischolar/data";
+import { writeWorkplaceSession } from "@/lib/verischolar/supabase";
 
 function getStringValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -24,6 +27,7 @@ export async function analyzeBoardAction(
       message: "Add a research question before running synthesis.",
       analysis: null,
       selectedSourceIds: [],
+      workplaceSessionId: null,
     };
   }
 
@@ -33,6 +37,7 @@ export async function analyzeBoardAction(
       message: "Select at least three sources to generate a reliable synthesis.",
       analysis: null,
       selectedSourceIds: selectedIds,
+      workplaceSessionId: null,
     };
   }
 
@@ -45,17 +50,27 @@ export async function analyzeBoardAction(
         "Some selected sources could not be revalidated on the server. Try again.",
       analysis: null,
       selectedSourceIds: selectedIds,
+      workplaceSessionId: null,
     };
   }
 
   try {
     const analysis = await analyzeResearchBoard(query, selectedSources);
+    const workplaceSessionId = randomUUID();
+
+    await writeWorkplaceSession({
+      sessionId: workplaceSessionId,
+      query,
+      selectedSourceIds: selectedSources.map((source) => source.id),
+      analysis,
+    });
 
     return {
       status: "success",
-      message: "Analysis refreshed from the selected research board.",
+      message: "Synthesis session created in Workplace.",
       analysis,
       selectedSourceIds: selectedSources.map((source) => source.id),
+      workplaceSessionId,
     };
   } catch (error) {
     const message =
@@ -68,6 +83,7 @@ export async function analyzeBoardAction(
       message,
       analysis: null,
       selectedSourceIds: selectedSources.map((source) => source.id),
+      workplaceSessionId: null,
     };
   }
 }

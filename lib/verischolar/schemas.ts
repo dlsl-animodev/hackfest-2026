@@ -224,6 +224,16 @@ export const analysisResultSchema = z
   })
   .strict();
 
+export const workplaceSessionSchema = z
+  .object({
+    sessionId: z.string().min(1),
+    query: z.string().min(1),
+    selectedSourceIds: z.array(z.string().min(1)),
+    analysis: analysisResultSchema,
+    createdAt: z.string().datetime({ offset: true }),
+  })
+  .strict();
+
 export const searchResponseSchema = z
   .object({
     query: z.string().min(1),

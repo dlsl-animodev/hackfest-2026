@@ -5,6 +5,7 @@ export type AnalysisActionState = {
   message: string | null;
   analysis: AnalysisResult | null;
   selectedSourceIds: string[];
+  workplaceSessionId: string | null;
 };
 
 export const INITIAL_ANALYSIS_ACTION_STATE: AnalysisActionState = {
@@ -12,4 +13,5 @@ export const INITIAL_ANALYSIS_ACTION_STATE: AnalysisActionState = {
   message: null,
   analysis: null,
   selectedSourceIds: [],
+  workplaceSessionId: null,
 };

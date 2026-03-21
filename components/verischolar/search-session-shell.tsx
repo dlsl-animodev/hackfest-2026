@@ -67,6 +67,7 @@ export function SearchSessionShell({
     (state) => state.syncCompletedSearch,
   );
   const bottomAnchorRef = useRef<HTMLDivElement | null>(null);
+  const navigatedWorkplaceSessionRef = useRef<string | null>(null);
   const [analysisState, analyzeAction, isAnalyzing] = useActionState(
     analyzeBoardAction,
     INITIAL_ANALYSIS_ACTION_STATE,
@@ -82,6 +83,21 @@ export function SearchSessionShell({
   useEffect(() => {
     setGlobalAnalysisState(analysisState);
   }, [analysisState, setGlobalAnalysisState]);
+
+  useEffect(() => {
+    const workplaceSessionId = analysisState.workplaceSessionId;
+
+    if (!workplaceSessionId) {
+      return;
+    }
+
+    if (navigatedWorkplaceSessionRef.current === workplaceSessionId) {
+      return;
+    }
+
+    navigatedWorkplaceSessionRef.current = workplaceSessionId;
+    router.push(`/workplace/${encodeURIComponent(workplaceSessionId)}`);
+  }, [analysisState.workplaceSessionId, router]);
 
   const selectedSources = useMemo(
     () => boardSources.filter((source) => selectedIds.includes(source.id)),

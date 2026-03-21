@@ -122,6 +122,14 @@ export type AnalysisResult = {
   generatedFromSourceIds: string[];
 };
 
+export type WorkplaceSession = {
+  sessionId: string;
+  query: string;
+  selectedSourceIds: string[];
+  analysis: AnalysisResult;
+  createdAt: string;
+};
+
 export type SearchResponse = {
   query: string;
   expandedQuery: string | null;
