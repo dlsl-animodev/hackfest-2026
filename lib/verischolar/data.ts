@@ -39,6 +39,7 @@ import type {
   ResearchSource,
   RetractionStatus,
   ScoreInput,
+  SearchMode,
   SearchResponse,
   SourceProvider,
 } from "@/lib/verischolar/types";
@@ -144,6 +145,33 @@ type NormalizedCandidate = {
   retractionEvidence: string;
 };
 
+type TimedAttempt<T> =
+  | { status: "ok"; value: T }
+  | { status: "timeout" }
+  | { status: "error"; error: unknown };
+
+type JsonFetchInit = RequestInit & {
+  timeoutMs?: number;
+};
+
+const FETCH_TIMEOUT_MS = 3000;
+const SEMANTIC_SCHOLAR_TIMEOUT_MS = 2800;
+const OPENALEX_TIMEOUT_MS = 3800;
+const CROSSREF_TIMEOUT_MS = 900;
+const QUERY_EXPANSION_TIMEOUT_MS = 700;
+const SOURCE_INSIGHTS_TIMEOUT_MS = 1000;
+const LOCALITY_REVIEW_TIMEOUT_MS = 600;
+const OVERALL_FINDINGS_TIMEOUT_MS = 900;
+const NON_AUTHORITATIVE_HOSTS = new Set([
+  "api.openalex.org",
+  "api.semanticscholar.org",
+  "doi.org",
+  "dx.doi.org",
+  "openalex.org",
+  "semanticscholar.org",
+  "www.semanticscholar.org",
+]);
+
 class UpstreamError extends Error {
   provider: string;
   status: number;
@@ -161,6 +189,82 @@ function normalizeQuery(query: string) {
 
 function normalizeWhitespace(value: string) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+function stripLegacyLocalQuery(query: string) {
+  const trimmed = query.trim();
+
+  if (
+    !/country:\s*philippines|\.edu\.ph|\.gov\.ph|metro manila|de la salle|university of the philippines/i.test(
+      trimmed,
+    )
+  ) {
+    return trimmed;
+  }
+
+  const [baseQuery] = trimmed.split(/\s+AND\s+\(/i);
+
+  return baseQuery?.trim() || trimmed;
+}
+
+function hasPhilippineFocus(query: string) {
+  return /\b(philippines?|philippine|filipino|metro manila|luzon|visayas|mindanao|university of the philippines|ateneo|de la salle|ust)\b|\.edu\.ph|\.gov\.ph/i.test(
+    query,
+  );
+}
+
+function buildSearchTerm(query: string, searchMode: SearchMode) {
+  const sanitizedQuery = stripLegacyLocalQuery(query);
+
+  if (searchMode !== "local") {
+    return sanitizedQuery;
+  }
+
+  const alreadyMentionsPhilippines = /\bphilippines?\b/i.test(sanitizedQuery);
+  const localBiasTerms = hasPhilippineFocus(sanitizedQuery)
+    ? alreadyMentionsPhilippines
+      ? []
+      : ["Philippines"]
+    : ["Philippines", "Filipino", "local study"];
+
+  return [sanitizedQuery, ...localBiasTerms].join(" ").trim();
+}
+
+function isProviderFailureWarning(warning: string) {
+  return (
+    warning.includes("was unavailable") ||
+    warning.includes("rate limits were hit")
+  );
+}
+
+function shouldPersistSearchCache(response: SearchResponse) {
+  return (
+    response.sources.length > 0 ||
+    !response.warnings.some(isProviderFailureWarning)
+  );
+}
+
+async function settleWithin<T>(
+  task: Promise<T>,
+  timeoutMs: number,
+): Promise<TimedAttempt<T>> {
+  let timeoutId: NodeJS.Timeout | null = null;
+
+  const timeoutPromise = new Promise<TimedAttempt<T>>((resolve) => {
+    timeoutId = setTimeout(() => resolve({ status: "timeout" }), timeoutMs);
+  });
+
+  const taskPromise = task
+    .then((value) => ({ status: "ok", value }) satisfies TimedAttempt<T>)
+    .catch((error) => ({ status: "error", error }) satisfies TimedAttempt<T>);
+
+  const result = await Promise.race([taskPromise, timeoutPromise]);
+
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+
+  return result;
 }
 
 function normalizeDoi(doi: string | null | undefined) {
@@ -186,52 +290,10 @@ function normalizeTitle(title: string | null | undefined) {
     .trim();
 }
 
-function getTitleTokenSet(title: string | null | undefined) {
-  const normalized = normalizeTitle(title);
-
-  if (!normalized) {
-    return new Set<string>();
-  }
-
-  return new Set(
-    normalized
-      .split(" ")
-      .map((token) => token.trim())
-      .filter((token) => token.length >= 3),
-  );
-}
-
-function getTitleSimilarity(
-  left: string | null | undefined,
-  right: string | null | undefined,
-) {
-  const leftSet = getTitleTokenSet(left);
-  const rightSet = getTitleTokenSet(right);
-
-  if (leftSet.size === 0 || rightSet.size === 0) {
-    return 0;
-  }
-
-  let intersection = 0;
-
-  for (const token of leftSet) {
-    if (rightSet.has(token)) {
-      intersection += 1;
-    }
-  }
-
-  const union = leftSet.size + rightSet.size - intersection;
-  return union === 0 ? 0 : intersection / union;
-}
-
 function uniqueStrings(values: Array<string | null | undefined>) {
   return [
     ...new Set(values.map((value) => value?.trim()).filter(Boolean)),
   ] as string[];
-}
-
-function encodeOpenAlexIdentifier(identifier: string) {
-  return encodeURIComponent(identifier);
 }
 
 function getOpenAlexUrl(path: string) {
@@ -258,14 +320,15 @@ function getCrossrefUrl(doi: string) {
   return url.toString();
 }
 
-async function fetchJson<T>(provider: string, url: string, init?: RequestInit) {
+async function fetchJson<T>(provider: string, url: string, init?: JsonFetchInit) {
+  const { timeoutMs = FETCH_TIMEOUT_MS, ...requestInit } = init ?? {};
   const response = await fetch(url, {
-    ...init,
+    ...requestInit,
     cache: "no-store",
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(timeoutMs),
     headers: {
       Accept: "application/json",
-      ...(init?.headers ?? {}),
+      ...(requestInit.headers ?? {}),
     },
   });
 
@@ -305,6 +368,7 @@ async function fetchSemanticScholarResults(query: string) {
     `https://api.semanticscholar.org/graph/v1/paper/search?${params.toString()}`,
     {
       headers: getSemanticScholarHeaders(),
+      timeoutMs: SEMANTIC_SCHOLAR_TIMEOUT_MS,
     },
   );
 
@@ -316,59 +380,10 @@ async function fetchOpenAlexSearch(query: string) {
   url.searchParams.set("search", query);
   url.searchParams.set("per-page", "12");
 
-  const payload = await fetchJson<OpenAlexResponse>("OpenAlex", url.toString());
+  const payload = await fetchJson<OpenAlexResponse>("OpenAlex", url.toString(), {
+    timeoutMs: OPENALEX_TIMEOUT_MS,
+  });
   return payload.results ?? [];
-}
-
-async function fetchOpenAlexByDoi(doi: string) {
-  const directUrl = getOpenAlexUrl(
-    `/works/${encodeOpenAlexIdentifier(`https://doi.org/${doi}`)}`,
-  );
-
-  try {
-    return await fetchJson<OpenAlexWork>("OpenAlex", directUrl);
-  } catch (error) {
-    if (error instanceof UpstreamError && error.status === 404) {
-      return null;
-    }
-
-    throw error;
-  }
-}
-
-async function fetchOpenAlexEnrichment({
-  doi,
-  title,
-}: {
-  doi: string | null;
-  title: string;
-}) {
-  if (doi) {
-    const byDoi = await fetchOpenAlexByDoi(doi);
-
-    if (byDoi) {
-      return byDoi;
-    }
-  }
-
-  const results = await fetchOpenAlexSearch(title);
-
-  if (results.length === 0) {
-    return null;
-  }
-
-  const bestByTitle = results
-    .map((work) => ({
-      work,
-      score: getTitleSimilarity(title, work.display_name ?? work.title ?? null),
-    }))
-    .sort((left, right) => right.score - left.score)[0];
-
-  if (!bestByTitle || bestByTitle.score < 0.55) {
-    return null;
-  }
-
-  return bestByTitle.work;
 }
 
 function rebuildAbstract(index: Record<string, number[]> | undefined) {
@@ -395,7 +410,7 @@ function truncateSentence(text: string, maxLength = 240) {
     return text;
   }
 
-  return `${text.slice(0, maxLength).trimEnd()}…`;
+  return `${text.slice(0, maxLength).trimEnd()}...`;
 }
 
 function deriveSummaryAndFindingFromAbstract(abstract: string | null) {
@@ -545,6 +560,9 @@ async function getCrossrefStatus(
     const payload = await fetchJson<CrossrefResponse>(
       "Crossref",
       getCrossrefUrl(normalizedDoi),
+      {
+        timeoutMs: CROSSREF_TIMEOUT_MS,
+      },
     );
     const message = payload.message;
     const status = getRetractionStatusFromCrossref(message);
@@ -710,7 +728,16 @@ function getHostname(url: string | null) {
   }
 
   try {
-    return new URL(url).hostname.toLowerCase();
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    if (
+      NON_AUTHORITATIVE_HOSTS.has(hostname) ||
+      hostname.endsWith(".semanticscholar.org")
+    ) {
+      return null;
+    }
+
+    return hostname;
   } catch {
     return null;
   }
@@ -751,19 +778,13 @@ function getLocality({
   journal: string | null;
   url: string | null;
 }) {
+  const hostname = getHostname(url);
+
   if (publicationCountryCode === "PH") {
     return {
       localityLabel: "Local" as const,
       localReason:
         "Publication venue metadata reports a Philippine country code.",
-    };
-  }
-
-  if (publicationCountryCode && publicationCountryCode !== "PH") {
-    return {
-      localityLabel: "Foreign" as const,
-      localReason:
-        "Publication venue metadata reports a non-Philippine country code.",
     };
   }
 
@@ -791,8 +812,6 @@ function getLocality({
     };
   }
 
-  const hostname = getHostname(url);
-
   if (
     hostname &&
     PHILIPPINE_DOMAIN_HINTS.some((suffix) => hostname.endsWith(suffix))
@@ -804,16 +823,27 @@ function getLocality({
     };
   }
 
-  if (
-    countryCodes.length > 0 ||
-    affiliations.length > 0 ||
-    journal ||
-    hostname
-  ) {
+  if (publicationCountryCode && publicationCountryCode !== "PH") {
     return {
       localityLabel: "Foreign" as const,
       localReason:
-        "No Philippine affiliation, venue, or domain signal was detected in the available metadata.",
+        "Publication venue metadata reports a non-Philippine country code.",
+    };
+  }
+
+  if (countryCodes.some((code) => code && code !== "PH")) {
+    return {
+      localityLabel: "Foreign" as const,
+      localReason:
+        "Affiliation metadata points to a non-Philippine country code.",
+    };
+  }
+
+  if (affiliations.length > 0 || journal || hostname) {
+    return {
+      localityLabel: "Unknown" as const,
+      localReason:
+        "Available metadata did not establish a reliable Philippine or foreign classification.",
     };
   }
 
@@ -1206,7 +1236,7 @@ function toResearchSource(
     url: candidate.url,
     journal: candidate.journal,
     publisher: candidate.publisher,
-    journalTier: null,
+    journalTier: journalQuality === "Unknown" ? null : journalQuality,
     citationCount: candidate.citationCount,
     affiliations: candidate.affiliations,
     countryCodes: candidate.countryCodes,
@@ -1322,10 +1352,6 @@ function getSourceUrl({
   semanticScholarUrl: string | null | undefined;
   openAlexUrl: string | null | undefined;
 }) {
-  if (semanticScholarUrl) {
-    return semanticScholarUrl;
-  }
-
   if (openAlexUrl) {
     return openAlexUrl;
   }
@@ -1334,74 +1360,54 @@ function getSourceUrl({
     return `https://doi.org/${doi}`;
   }
 
+  if (semanticScholarUrl) {
+    return semanticScholarUrl;
+  }
+
   return null;
 }
 
 async function normalizeSemanticScholarPaper(paper: SemanticScholarPaper) {
   const doi = normalizeDoi(paper.externalIds?.DOI);
-  const [openAlex, crossref] = await Promise.all([
-    fetchOpenAlexEnrichment({
-      doi,
-      title: paper.title ?? "",
-    }).catch(() => null),
-    getCrossrefStatus(doi).catch(() => null),
-  ]);
-
-  const openAlexAbstract = rebuildAbstract(openAlex?.abstract_inverted_index);
-  const openAlexJournal =
-    openAlex?.primary_location?.source?.display_name ?? null;
-  const publicationCountryCode =
-    openAlex?.primary_location?.source?.country_code ??
-    getPublisherLocationCountryCode(crossref?.publisherLocation ?? null);
+  const crossrefAttempt = doi
+    ? await settleWithin(getCrossrefStatus(doi), 1200)
+    : ({ status: "ok", value: null } satisfies TimedAttempt<CrossrefStatus | null>);
+  const crossref = crossrefAttempt.status === "ok" ? crossrefAttempt.value : null;
+  const publicationCountryCode = getPublisherLocationCountryCode(
+    crossref?.publisherLocation ?? null,
+  );
 
   return {
     sourceProvider: "Semantic Scholar" as const,
     paperId: paper.paperId ?? null,
-    openAlexId: openAlex?.id ?? null,
+    openAlexId: null,
     title: normalizeWhitespace(paper.title ?? "Untitled source"),
     authors: uniqueStrings(
       (paper.authors ?? []).map((author) => author.name ?? null),
     ),
-    year: paper.year ?? openAlex?.publication_year ?? null,
-    abstract: paper.abstract?.trim() || openAlexAbstract,
+    year: paper.year ?? null,
+    abstract: paper.abstract?.trim() || null,
     doi,
     url: getSourceUrl({
       doi,
       semanticScholarUrl: paper.url,
-      openAlexUrl: openAlex?.primary_location?.landing_page_url,
+      openAlexUrl: null,
     }),
-    journal: openAlexJournal ?? paper.venue ?? null,
-    publisher:
-      crossref?.publisher ??
-      openAlex?.primary_location?.source?.host_organization_name ??
-      null,
-    citationCount: paper.citationCount ?? openAlex?.cited_by_count ?? null,
-    affiliations: openAlex ? getOpenAlexAffiliations(openAlex) : [],
-    countryCodes: openAlex ? getOpenAlexCountryCodes(openAlex) : [],
+    journal: paper.venue ?? null,
+    publisher: crossref?.publisher ?? null,
+    citationCount: paper.citationCount ?? null,
+    affiliations: [],
+    countryCodes: [],
     publicationCountryCode,
-    retractionStatus:
-      crossref?.retractionStatus ??
-      (openAlex?.is_retracted === true
-        ? "Retracted"
-        : openAlex?.is_retracted === false
-          ? "Clear"
-          : "Unknown"),
+    retractionStatus: crossref?.retractionStatus ?? "Unknown",
     retractionEvidence:
-      crossref?.evidence ??
-      (openAlex?.is_retracted === true
-        ? "OpenAlex marks this work as retracted."
-        : openAlex?.is_retracted === false
-          ? "OpenAlex does not flag this work as retracted."
-          : "Retraction metadata was unavailable for this source."),
+      crossref?.evidence ?? "Retraction metadata was unavailable for this source.",
   } satisfies NormalizedCandidate;
 }
 
 async function normalizeOpenAlexWork(work: OpenAlexWork) {
   const doi = normalizeDoi(work.doi);
-  const crossref = await getCrossrefStatus(doi).catch(() => null);
-  const publicationCountryCode =
-    work.primary_location?.source?.country_code ??
-    getPublisherLocationCountryCode(crossref?.publisherLocation ?? null);
+  const publicationCountryCode = work.primary_location?.source?.country_code ?? null;
 
   return {
     sourceProvider: "OpenAlex" as const,
@@ -1420,28 +1426,23 @@ async function normalizeOpenAlexWork(work: OpenAlexWork) {
       openAlexUrl: work.primary_location?.landing_page_url,
     }),
     journal: work.primary_location?.source?.display_name ?? null,
-    publisher:
-      crossref?.publisher ??
-      work.primary_location?.source?.host_organization_name ??
-      null,
+    publisher: work.primary_location?.source?.host_organization_name ?? null,
     citationCount: work.cited_by_count ?? null,
     affiliations: getOpenAlexAffiliations(work),
     countryCodes: getOpenAlexCountryCodes(work),
     publicationCountryCode,
     retractionStatus:
-      crossref?.retractionStatus ??
-      (work.is_retracted === true
+      work.is_retracted === true
         ? "Retracted"
         : work.is_retracted === false
           ? "Clear"
-          : "Unknown"),
+          : "Unknown",
     retractionEvidence:
-      crossref?.evidence ??
-      (work.is_retracted === true
+      work.is_retracted === true
         ? "OpenAlex marks this work as retracted."
         : work.is_retracted === false
           ? "OpenAlex does not flag this work as retracted."
-          : "Retraction metadata was unavailable for this source."),
+          : "Retraction metadata was unavailable for this source.",
   } satisfies NormalizedCandidate;
 }
 
@@ -1491,12 +1492,16 @@ export function getSelectionHash(query: string, ids: string[]) {
 }
 
 export const getSearchResponse = cache(
-  async (query: string): Promise<SearchResponse> => {
+  async (
+    query: string,
+    searchMode: SearchMode = "all",
+  ): Promise<SearchResponse> => {
     const rawQuery = query.trim();
 
     if (!rawQuery) {
       return {
         query,
+        searchMode,
         expandedQuery: null,
         overallFindingsSummary: null,
         sources: [],
@@ -1506,133 +1511,148 @@ export const getSearchResponse = cache(
     }
 
     const normalized = normalizeQuery(rawQuery);
-    const cachedResponse = await readQueryCache(normalized);
+    const cachedResponse = await readQueryCache(normalized, searchMode);
 
     if (cachedResponse) {
-      let sources = cachedResponse.sources;
-      const cachedWarnings = new Set(cachedResponse.warnings);
-      let overallFindingsSummary = cachedResponse.overallFindingsSummary;
-
-      try {
-        const localityEnhanced = await enhanceUnknownLocalityWithAi(sources);
-        sources = localityEnhanced.sources;
-
-        if (localityEnhanced.updatedCount > 0) {
-          cachedWarnings.add(
-            `AI locality review clarified ${localityEnhanced.updatedCount} source locality label(s).`,
-          );
-        }
-      } catch {
-        cachedWarnings.add(
-          "AI locality review was unavailable for this cache hit, so API-only locality checks were used.",
-        );
-      }
-
-      try {
-        overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
-          query: rawQuery,
-          sources,
-        });
-      } catch {
-        cachedWarnings.add(
-          "AI overall findings summary is unavailable for this cache hit, so only per-source summaries are shown.",
-        );
-      }
-
       return {
         ...cachedResponse,
         query: rawQuery,
-        sources,
-        overallFindingsSummary,
+        searchMode,
         fromCache: true,
-        warnings: [...cachedWarnings],
       };
     }
 
     const warnings = new Set<string>();
     let expandedQuery: string | null = null;
 
-    try {
-      const expansion = await expandQuery(rawQuery);
+    const expansionAttempt = await settleWithin(
+      expandQuery(rawQuery),
+      QUERY_EXPANSION_TIMEOUT_MS,
+    );
 
-      if (expansion) {
-        expandedQuery = expansion.expandedQuery;
+    if (expansionAttempt.status === "ok") {
+      if (expansionAttempt.value) {
+        expandedQuery = expansionAttempt.value.expandedQuery;
       } else {
         warnings.add(
           "AI query expansion is unavailable, so the raw research question was used.",
         );
       }
-    } catch {
+    } else if (expansionAttempt.status === "timeout") {
+      warnings.add(
+        "AI query expansion timed out to keep the search moving, so the raw research question was used.",
+      );
+    } else {
       warnings.add(
         "AI query expansion failed, so the raw research question was used.",
       );
     }
 
-    const searchTerm = expandedQuery ?? rawQuery;
-    let candidates: NormalizedCandidate[] = [];
-    const semanticScholarApiKey = getSemanticScholarApiKey();
+    const searchTerm = buildSearchTerm(expandedQuery ?? rawQuery, searchMode);
+    const [semanticScholarSearch, openAlexSearch] = await Promise.allSettled([
+      fetchSemanticScholarResults(searchTerm),
+      fetchOpenAlexSearch(searchTerm),
+    ]);
 
-    if (semanticScholarApiKey) {
-      try {
-        const semanticScholarResults =
-          await fetchSemanticScholarResults(searchTerm);
-        candidates = await Promise.all(
-          semanticScholarResults.map((paper) =>
-            normalizeSemanticScholarPaper(paper),
-          ),
-        );
-      } catch (error) {
-        warnings.add(toWarningMessage(error, "Semantic Scholar", true));
-      }
-    } else {
+    const semanticScholarResults =
+      semanticScholarSearch.status === "fulfilled"
+        ? semanticScholarSearch.value
+        : [];
+    const openAlexResults =
+      openAlexSearch.status === "fulfilled" ? openAlexSearch.value : [];
+
+    if (semanticScholarSearch.status === "rejected") {
       warnings.add(
-        "Semantic Scholar API key is not configured, so VeriScholar is using OpenAlex-first live search for now.",
+        toWarningMessage(semanticScholarSearch.reason, "Semantic Scholar", true),
       );
     }
 
-    try {
-      if (candidates.length < 10) {
-        const openAlexResults = await fetchOpenAlexSearch(searchTerm);
-        const normalizedOpenAlex = await Promise.all(
-          openAlexResults.map((work) => normalizeOpenAlexWork(work)),
-        );
-        candidates = dedupeCandidates([...candidates, ...normalizedOpenAlex]);
-
-        if (candidates.length > 0 && normalizedOpenAlex.length > 0) {
-          warnings.add(
-            "OpenAlex metadata was used to enrich results and fill gaps in provider coverage.",
-          );
-        }
-      }
-    } catch (error) {
-      warnings.add(toWarningMessage(error, "OpenAlex"));
+    if (openAlexSearch.status === "rejected") {
+      warnings.add(toWarningMessage(openAlexSearch.reason, "OpenAlex"));
+    } else if (openAlexResults.length > 0) {
+      warnings.add(
+        "OpenAlex metadata was used to enrich results and fill gaps in provider coverage.",
+      );
     }
 
-    const uniqueCandidates = dedupeCandidates(candidates).slice(0, 12);
-    let sources = uniqueCandidates.map((candidate) =>
-      toResearchSource(candidate, {
-        summary: null,
-        keyFinding: null,
-        methodologyNote: null,
+    const [normalizedSemantic, normalizedOpenAlex] = await Promise.all([
+      Promise.all(
+        semanticScholarResults.map((paper) => normalizeSemanticScholarPaper(paper)),
+      ),
+      Promise.all(openAlexResults.map((work) => normalizeOpenAlexWork(work))),
+    ]);
+
+    const uniqueCandidates = dedupeCandidates([
+      ...normalizedSemantic,
+      ...normalizedOpenAlex,
+    ]).slice(0, 12);
+    const fallbackDetailsBySourceId = new Map(
+      uniqueCandidates.map((candidate) => {
+        const fallback = deriveSummaryAndFindingFromAbstract(candidate.abstract);
+
+        return [
+          buildSourceId(candidate),
+          {
+            summary: fallback.summary,
+            keyFinding: fallback.keyFinding,
+          },
+        ] as const;
       }),
     );
+    let sources = uniqueCandidates.map((candidate) => {
+      const fallback = fallbackDetailsBySourceId.get(buildSourceId(candidate)) ?? {
+        summary: null,
+        keyFinding: null,
+      };
 
-    try {
-      const sourceInsightsResult = await generateSourceInsights({
-        sources: uniqueCandidates.map((candidate) => ({
-          sourceId: buildSourceId(candidate),
-          title: candidate.title,
-          abstract: candidate.abstract,
-        })),
+      return toResearchSource(candidate, {
+        summary: fallback.summary,
+        keyFinding: fallback.keyFinding,
+        methodologyNote: null,
       });
+    });
+
+    const [sourceInsightsAttempt, localityAttempt, overallSummaryAttempt] =
+      await Promise.all([
+        settleWithin(
+          generateSourceInsights({
+            sources: uniqueCandidates.map((candidate) => ({
+              sourceId: buildSourceId(candidate),
+              title: candidate.title,
+              abstract: candidate.abstract,
+            })),
+          }),
+          SOURCE_INSIGHTS_TIMEOUT_MS,
+        ),
+        settleWithin(
+          enhanceUnknownLocalityWithAi(sources),
+          LOCALITY_REVIEW_TIMEOUT_MS,
+        ),
+        searchMode === "local"
+          ? Promise.resolve({
+              status: "ok",
+              value: null,
+            } satisfies TimedAttempt<string | null>)
+          : settleWithin(
+              generateOverallFindingsSummaryForQuery({
+                query: rawQuery,
+                sources,
+              }),
+              OVERALL_FINDINGS_TIMEOUT_MS,
+            ),
+      ]);
+
+    if (sourceInsightsAttempt.status === "ok") {
+      const sourceInsightsResult = sourceInsightsAttempt.value;
 
       if (sourceInsightsResult) {
         sources = uniqueCandidates.map((candidate) => {
           const sourceId = buildSourceId(candidate);
           const insight = sourceInsightsResult.insightsBySourceId[sourceId];
-          const fallback = deriveSummaryAndFindingFromAbstract(
-            candidate.abstract,
-          );
+          const fallback = fallbackDetailsBySourceId.get(sourceId) ?? {
+            summary: null,
+            keyFinding: null,
+          };
 
           return toResearchSource(candidate, {
             summary: insight?.summary ?? fallback.summary,
@@ -1641,56 +1661,105 @@ export const getSearchResponse = cache(
           });
         });
       } else {
-        sources = uniqueCandidates.map((candidate) => {
-          const fallback = deriveSummaryAndFindingFromAbstract(
-            candidate.abstract,
-          );
-
-          return toResearchSource(candidate, {
-            summary: fallback.summary,
-            keyFinding: fallback.keyFinding,
-            methodologyNote: null,
-          });
-        });
-
         warnings.add(
           "AI source insights are unavailable, so per-source Summary and Key finding were generated with abstract slicing fallback.",
         );
       }
-    } catch {
-      sources = uniqueCandidates.map((candidate) => {
-        const fallback = deriveSummaryAndFindingFromAbstract(
-          candidate.abstract,
-        );
-
-        return toResearchSource(candidate, {
-          summary: fallback.summary,
-          keyFinding: fallback.keyFinding,
-          methodologyNote: null,
-        });
-      });
-
+    } else if (sourceInsightsAttempt.status === "timeout") {
+      warnings.add(
+        "AI source insights timed out to keep search responsive, so per-source Summary and Key finding were generated with abstract slicing fallback.",
+      );
+    } else {
       warnings.add(
         "AI source insights failed, so per-source Summary and Key finding were generated with abstract slicing fallback.",
       );
     }
 
-    try {
-      const localityEnhanced = await enhanceUnknownLocalityWithAi(sources);
-      sources = localityEnhanced.sources;
+    if (localityAttempt.status === "ok") {
+      const localityBySourceId = new Map(
+        localityAttempt.value.sources.map((source) => [
+          source.id,
+          {
+            localityLabel: source.localityLabel,
+            localReason: source.localReason,
+          },
+        ]),
+      );
 
-      if (localityEnhanced.updatedCount > 0) {
+      sources = sources.map((source) => {
+        const locality = localityBySourceId.get(source.id);
+
+        if (!locality) {
+          return source;
+        }
+
+        return {
+          ...source,
+          localityLabel: locality.localityLabel,
+          localReason: locality.localReason,
+        };
+      });
+
+      if (localityAttempt.value.updatedCount > 0) {
         warnings.add(
-          `AI locality review clarified ${localityEnhanced.updatedCount} source locality label(s).`,
+          `AI locality review clarified ${localityAttempt.value.updatedCount} source locality label(s).`,
         );
       }
-    } catch {
+    } else if (localityAttempt.status === "timeout") {
+      warnings.add(
+        "AI locality review timed out to keep search responsive, so API-only locality checks were used.",
+      );
+    } else {
       warnings.add(
         "AI locality review was unavailable for this run, so API-only locality checks were used.",
       );
     }
 
     sources = sortSources(sources);
+
+    if (searchMode === "local" && sources.length > 0) {
+      const confirmedLocalSources = sources.filter(
+        (source) => source.localityLabel === "Local",
+      );
+
+      if (confirmedLocalSources.length > 0) {
+        const uncertainLocalitySources = sources.filter(
+          (source) => source.localityLabel === "Unknown",
+        );
+
+        sources = [
+          ...sortSources(confirmedLocalSources),
+          ...sortSources(uncertainLocalitySources),
+        ];
+
+        warnings.add(
+          uncertainLocalitySources.length > 0
+            ? `Showing ${confirmedLocalSources.length} confirmed local source${
+                confirmedLocalSources.length === 1 ? "" : "s"
+              } first, plus ${uncertainLocalitySources.length} locality-uncertain candidate${
+                uncertainLocalitySources.length === 1 ? "" : "s"
+              }.`
+            : `Showing ${confirmedLocalSources.length} source${
+                confirmedLocalSources.length === 1 ? "" : "s"
+              } with Philippine locality signals.`,
+        );
+      } else {
+        const possibleLocalSources = sources.filter(
+          (source) => source.localityLabel !== "Foreign",
+        );
+
+        if (possibleLocalSources.length > 0) {
+          sources = sortSources(possibleLocalSources);
+          warnings.add(
+            "No confidently local papers were confirmed from metadata, so locality-uncertain candidates are shown.",
+          );
+        } else {
+          warnings.add(
+            "No confidently local papers were found for this query, so broader results are shown.",
+          );
+        }
+      }
+    }
 
     if (sources.length === 0) {
       warnings.add(
@@ -1700,13 +1769,11 @@ export const getSearchResponse = cache(
 
     let overallFindingsSummary: string | null = null;
 
-    try {
-      overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
-        query: rawQuery,
-        sources,
-      });
+    if (overallSummaryAttempt.status === "ok") {
+      overallFindingsSummary = overallSummaryAttempt.value;
 
       if (
+        searchMode === "all" &&
         !overallFindingsSummary &&
         sources.some((source) => source.abstract)
       ) {
@@ -1714,14 +1781,20 @@ export const getSearchResponse = cache(
           "AI overall findings summary is unavailable for this run, so only per-source summaries are shown.",
         );
       }
-    } catch {
+    } else if (
+      searchMode === "all" &&
+      sources.some((source) => source.abstract)
+    ) {
       warnings.add(
-        "AI overall findings summary failed for this run, so only per-source summaries are shown.",
+        overallSummaryAttempt.status === "timeout"
+          ? "AI overall findings summary timed out to keep search responsive, so only per-source summaries are shown."
+          : "AI overall findings summary failed for this run, so only per-source summaries are shown.",
       );
     }
 
     const response = {
       query: rawQuery,
+      searchMode,
       expandedQuery,
       overallFindingsSummary,
       sources,
@@ -1729,20 +1802,28 @@ export const getSearchResponse = cache(
       warnings: [...warnings],
     } satisfies SearchResponse;
 
-    await writeQueryCache(response);
+    if (shouldPersistSearchCache(response)) {
+      await writeQueryCache(response);
+    }
     await Promise.all(response.sources.map((source) => writeWorkCache(source)));
 
     return response;
   },
 );
 
-export const getSearchResults = cache(async (query: string) => {
-  const response = await getSearchResponse(query);
-  return response.sources;
-});
+export const getSearchResults = cache(
+  async (query: string, searchMode: SearchMode = "all") => {
+    const response = await getSearchResponse(query, searchMode);
+    return response.sources;
+  },
+);
 
-export async function getSelectedSources(query: string, ids: string[]) {
-  const response = await getSearchResponse(query);
+export async function getSelectedSources(
+  query: string,
+  ids: string[],
+  searchMode: SearchMode = "all",
+) {
+  const response = await getSearchResponse(query, searchMode);
   const selectedIds = new Set(ids);
   return response.sources.filter((source) => selectedIds.has(source.id));
 }

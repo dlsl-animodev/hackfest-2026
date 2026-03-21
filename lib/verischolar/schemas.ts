@@ -23,6 +23,7 @@ export const confidenceLabelSchema = z.enum([
 ]);
 
 export const sourceProviderSchema = z.enum(["Semantic Scholar", "OpenAlex"]);
+export const searchModeSchema = z.enum(["all", "local"]);
 
 export const localityLabelSchema = z.enum(["Local", "Foreign", "Unknown"]);
 
@@ -237,6 +238,7 @@ export const workplaceSessionSchema = z
 export const searchResponseSchema = z
   .object({
     query: z.string().min(1),
+    searchMode: searchModeSchema.optional().default("all"),
     expandedQuery: z.string().nullable(),
     overallFindingsSummary: z.string().nullable().optional().default(null),
     sources: z.array(researchSourceSchema),
@@ -283,7 +285,16 @@ export const localityReviewSchema = z.array(
     .object({
       sourceId: z.string().min(1),
       localityLabel: localityLabelSchema,
-      localReason: z.string().min(1),
+      localReason: z.preprocess((val) => {
+        if (typeof val !== "string") {
+          return "Metadata-only locality review did not provide a reason.";
+        }
+
+        const normalized = val.trim();
+        return normalized.length > 0
+          ? normalized
+          : "Metadata-only locality review did not provide a reason.";
+      }, z.string().min(1)),
     })
     .strict(),
 );

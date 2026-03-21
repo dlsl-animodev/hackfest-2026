@@ -22,13 +22,14 @@ import {
   getDashboardMetrics,
 } from "@/lib/verischolar/citations";
 import { SEARCH_ACTIVITY_STAGES } from "@/lib/verischolar/search-session";
-import type { SearchResponse } from "@/lib/verischolar/types";
+import type { SearchMode, SearchResponse } from "@/lib/verischolar/types";
 import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
 import { useResearchBoardStore } from "@/store/useResearchBoardStore";
 import { useSearchSessionStore } from "@/store/useSearchSessionStore";
 
 type SearchSessionShellProps = {
   query: string;
+  searchMode: SearchMode;
   searchResponse: SearchResponse | null;
 };
 
@@ -52,6 +53,7 @@ function sameSelection(left: string[], right: string[]) {
 
 export function SearchSessionShell({
   query,
+  searchMode,
   searchResponse,
 }: SearchSessionShellProps) {
   const router = useRouter();
@@ -185,7 +187,9 @@ export function SearchSessionShell({
       return;
     }
 
-    const href = `${pathname}?q=${encodeURIComponent(trimmedQuery)}`;
+    const href = `${pathname}?q=${encodeURIComponent(trimmedQuery)}${
+      searchMode === "local" ? "&local=1" : ""
+    }`;
 
     startTransition(() => {
       if (trimmedQuery === query) {
@@ -272,6 +276,7 @@ export function SearchSessionShell({
               </p>
               <AnalysisPanel
                 query={composerQuery}
+                searchMode={searchMode}
                 selectedSourceIds={selectedIds}
                 action={analyzeAction}
                 actionState={analysisState}

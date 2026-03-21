@@ -6,6 +6,7 @@ import { analyzeResearchBoard } from "@/lib/verischolar/analysis";
 import type { AnalysisActionState } from "@/lib/verischolar/action-state";
 import { getSelectedSources } from "@/lib/verischolar/data";
 import { writeWorkplaceSession } from "@/lib/verischolar/supabase";
+import type { SearchMode } from "@/lib/verischolar/types";
 
 function getStringValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -16,6 +17,8 @@ export async function analyzeBoardAction(
   formData: FormData,
 ): Promise<AnalysisActionState> {
   const query = getStringValue(formData.get("query"));
+  const rawSearchMode = getStringValue(formData.get("searchMode"));
+  const searchMode: SearchMode = rawSearchMode === "local" ? "local" : "all";
   const selectedIds = formData
     .getAll("sourceId")
     .map((value) => (typeof value === "string" ? value.trim() : ""))
@@ -42,7 +45,11 @@ export async function analyzeBoardAction(
     };
   }
 
-  const selectedSources = await getSelectedSources(query, selectedIds);
+  const selectedSources = await getSelectedSources(
+    query,
+    selectedIds,
+    searchMode,
+  );
 
   if (selectedSources.length < 3) {
     return {
@@ -59,12 +66,25 @@ export async function analyzeBoardAction(
     const analysis = await analyzeResearchBoard(query, selectedSources);
     const workplaceSessionId = randomUUID();
 
-    await writeWorkplaceSession({
-      sessionId: workplaceSessionId,
-      query,
-      selectedSourceIds: selectedSources.map((source) => source.id),
-      analysis,
-    });
+    try {
+      await writeWorkplaceSession({
+        sessionId: workplaceSessionId,
+        query,
+        selectedSourceIds: selectedSources.map((source) => source.id),
+        analysis,
+      });
+    } catch (error) {
+      return {
+        status: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "The synthesis was generated, but the Workplace session could not be saved.",
+        analysis,
+        selectedSourceIds: selectedSources.map((source) => source.id),
+        workplaceSessionId: null,
+      };
+    }
 
     return {
       status: "success",

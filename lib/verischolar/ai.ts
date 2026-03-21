@@ -116,12 +116,26 @@ function getAiProviders() {
   return [createGeminiProvider()];
 }
 
+function isExpectedOptionalAiFailure(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const errorText = `${error.name} ${error.message}`.toLowerCase();
+
+  return (
+    errorText.includes("timeout") ||
+    errorText.includes("abort") ||
+    errorText.includes("aborted")
+  );
+}
+
 async function runOptionalWithFallback<T>(
   operationName: string,
   execute: (provider: AiProvider) => Promise<T | null>,
 ): Promise<T | null> {
   const providers = getAiProviders();
-  let lastError: unknown = null;
+  let lastUnexpectedError: unknown = null;
 
   for (const provider of providers) {
     try {
@@ -131,18 +145,20 @@ async function runOptionalWithFallback<T>(
         return result;
       }
     } catch (error) {
-      lastError = error;
-      console.error(
-        `[AI Fallback] ${provider.name} failed during ${operationName}.`,
-        error,
-      );
+      if (!isExpectedOptionalAiFailure(error)) {
+        lastUnexpectedError = error;
+        console.error(
+          `[AI Fallback] ${provider.name} failed during ${operationName}.`,
+          error,
+        );
+      }
     }
   }
 
-  if (lastError) {
+  if (lastUnexpectedError) {
     console.error(
       `[AI Fallback] All providers failed during ${operationName}.`,
-      lastError,
+      lastUnexpectedError,
     );
   }
 
