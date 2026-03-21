@@ -6,6 +6,7 @@ type ResearchBoardState = {
   query: string;
   sources: ResearchSource[];
   selectedIds: string[];
+  resetBoard: () => void;
   initializeBoard: (query: string, sources: ResearchSource[]) => void;
   toggleSource: (sourceId: string) => void;
 };
@@ -21,6 +22,13 @@ export const useResearchBoardStore = create<ResearchBoardState>((set, get) => ({
   query: "",
   sources: [],
   selectedIds: [],
+  resetBoard: () => {
+    set({
+      query: "",
+      sources: [],
+      selectedIds: [],
+    });
+  },
   initializeBoard: (query, sources) => {
     const current = get();
     const currentSignature = current.sources
