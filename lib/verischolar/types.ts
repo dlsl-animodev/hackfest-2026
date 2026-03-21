@@ -81,6 +81,7 @@ export type ResearchSource = {
   citationCount: number | null;
   affiliations: string[];
   countryCodes: string[];
+  publicationCountryCode: string | null;
   sourceProvider: SourceProvider;
   paperId: string | null;
   openAlexId: string | null;

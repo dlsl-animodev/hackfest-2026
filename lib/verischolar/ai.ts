@@ -6,6 +6,7 @@ import {
   generateBoardAnalysis as generateBoardAnalysisWithGemini,
   generateMethodologyNotes as generateMethodologyNotesWithGemini,
   generateOverallFindingsSummary as generateOverallFindingsSummaryWithGemini,
+  reviewSourceLocalityWithGemini,
   generateSourceInsights as generateSourceInsightsWithGemini,
 } from "@/lib/verischolar/gemini";
 import type { AnalysisResult, ResearchSource } from "@/lib/verischolar/types";
@@ -43,6 +44,18 @@ type GapEvaluationResult = {
   resolvingSourceIds: string[];
 };
 
+type LocalityReviewResult = {
+  model: string;
+  localityBySourceId: Record<
+    string,
+    {
+      sourceId: string;
+      localityLabel: "Local" | "Foreign" | "Unknown";
+      localReason: string;
+    }
+  >;
+};
+
 type AiProvider = {
   name: string;
   expandQuery(query: string): Promise<QueryExpansionResult | null>;
@@ -60,6 +73,18 @@ type AiProvider = {
       abstract: string | null;
     }>;
   }): Promise<SourceInsightsResult | null>;
+  reviewSourceLocality(input: {
+    sources: Array<{
+      sourceId: string;
+      title: string;
+      journal: string | null;
+      publisher: string | null;
+      publicationCountryCode: string | null;
+      url: string | null;
+      affiliations: string[];
+      countryCodes: string[];
+    }>;
+  }): Promise<LocalityReviewResult | null>;
   generateBoardAnalysis(input: {
     query: string;
     sources: ResearchSource[];
@@ -80,6 +105,7 @@ function createGeminiProvider(): AiProvider {
     generateOverallFindingsSummary: (input) =>
       generateOverallFindingsSummaryWithGemini(input),
     generateSourceInsights: (input) => generateSourceInsightsWithGemini(input),
+    reviewSourceLocality: (input) => reviewSourceLocalityWithGemini(input),
     generateBoardAnalysis: (input) => generateBoardAnalysisWithGemini(input),
     evaluateIfGapAddressed: (gaps, sources) =>
       evaluateIfGapAddressedWithGemini(gaps, sources),
@@ -179,6 +205,23 @@ export async function generateSourceInsights(input: {
 }) {
   return runOptionalWithFallback("source insight generation", (provider) =>
     provider.generateSourceInsights(input),
+  );
+}
+
+export async function reviewSourceLocality(input: {
+  sources: Array<{
+    sourceId: string;
+    title: string;
+    journal: string | null;
+    publisher: string | null;
+    publicationCountryCode: string | null;
+    url: string | null;
+    affiliations: string[];
+    countryCodes: string[];
+  }>;
+}) {
+  return runOptionalWithFallback("source locality review", (provider) =>
+    provider.reviewSourceLocality(input),
   );
 }
 

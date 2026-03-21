@@ -89,6 +89,7 @@ export const researchSourceSchema = z
     citationCount: z.number().int().nonnegative().nullable(),
     affiliations: z.array(z.string()),
     countryCodes: z.array(z.string()),
+    publicationCountryCode: z.string().nullable(),
     sourceProvider: sourceProviderSchema,
     paperId: z.string().nullable(),
     openAlexId: z.string().nullable(),
@@ -266,3 +267,13 @@ export const gapEvaluationSchema = z
     resolvingSourceIds: z.array(z.string()),
   })
   .strict();
+
+export const localityReviewSchema = z.array(
+  z
+    .object({
+      sourceId: z.string().min(1),
+      localityLabel: localityLabelSchema,
+      localReason: z.string().min(1),
+    })
+    .strict(),
+);
