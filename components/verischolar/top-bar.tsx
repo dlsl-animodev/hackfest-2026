@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { BrandGlyph } from "@/components/verischolar/icons";
+import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
+import { useResearchBoardStore } from "@/store/useResearchBoardStore";
 import { useSearchSessionStore } from "@/store/useSearchSessionStore";
 
 type TopBarProps = {
@@ -10,8 +13,21 @@ type TopBarProps = {
 };
 
 export function TopBar({ compact = false }: TopBarProps) {
+  const router = useRouter();
   const pendingSearch = useSearchSessionStore((state) => state.pendingSearch);
+  const resetSession = useSearchSessionStore((state) => state.resetSession);
+  const resetBoard = useResearchBoardStore((state) => state.resetBoard);
+  const clearAnalysisState = useAnalysisStateStore(
+    (state) => state.clearAnalysisState,
+  );
   const isCompact = compact || Boolean(pendingSearch);
+
+  function handleGoHome() {
+    resetSession();
+    resetBoard();
+    clearAnalysisState();
+    router.push("/");
+  }
 
   return (
     <header
@@ -28,6 +44,7 @@ export function TopBar({ compact = false }: TopBarProps) {
       >
         <Link
           href="/"
+          onClick={handleGoHome}
           className={`group inline-flex items-center text-[var(--ink)] uppercase ${
             isCompact
               ? "gap-0"

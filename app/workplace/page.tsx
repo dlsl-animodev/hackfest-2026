@@ -24,7 +24,8 @@ export default async function WorkplaceHubPage() {
                 Synthesis sessions
               </h1>
               <p className="mt-2 text-[1.02rem] leading-7 text-[color:rgba(82,67,56,0.88)]">
-                Resume your contradiction-aware synthesis work from any recent session.
+                Resume your contradiction-aware synthesis work from any recent
+                session.
               </p>
             </div>
 
@@ -38,7 +39,8 @@ export default async function WorkplaceHubPage() {
 
           {sessions.length === 0 ? (
             <div className="mt-6 rounded-[1.3rem] border border-dashed border-[var(--line-strong)] bg-[rgba(255,251,243,0.72)] p-5 text-sm leading-7 text-[var(--muted)]">
-              No workplace sessions yet. Run contradiction-aware synthesis from a research board to create your first session.
+              No workplace sessions yet. Run contradiction-aware synthesis from
+              a research board to create your first session.
             </div>
           ) : (
             <div className="mt-6 grid gap-4 md:grid-cols-2">
