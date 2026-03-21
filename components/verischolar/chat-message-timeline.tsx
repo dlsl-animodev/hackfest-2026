@@ -10,10 +10,7 @@ import {
 import { BrandGlyph } from "@/components/verischolar/icons";
 import { SearchActivityBlock } from "@/components/verischolar/search-activity-block";
 import { WorkspaceClient } from "@/components/verischolar/workspace-client";
-import {
-  CHAT_MOTION,
-  getSettleMotion,
-} from "@/lib/verischolar/motion";
+import { CHAT_MOTION, getSettleMotion } from "@/lib/verischolar/motion";
 import {
   buildHydratedSearchId,
   buildHydratedTurnId,
@@ -212,13 +209,14 @@ export function ChatMessageTimeline({
       : turns;
 
   const latestSearchId = displayTurns.at(-1)?.searchId;
-  const usingSeedTurns = turns.length === 0 && Boolean(initialResponse && initialQuery);
+  const usingSeedTurns =
+    turns.length === 0 && Boolean(initialResponse && initialQuery);
   const suppressHydrationMotion = Boolean(
     initialSearchId &&
-      initialResponse &&
-      initialQuery &&
-      turns.length === 2 &&
-      turns.every((turn) => turn.searchId === initialSearchId),
+    initialResponse &&
+    initialQuery &&
+    turns.length === 2 &&
+    turns.every((turn) => turn.searchId === initialSearchId),
   );
 
   return (
@@ -232,9 +230,9 @@ export function ChatMessageTimeline({
               const isUser = turn.role === "user";
               const shouldAnimateTurn = Boolean(
                 latestSearchId &&
-                  turn.searchId === latestSearchId &&
-                  !usingSeedTurns &&
-                  !suppressHydrationMotion,
+                turn.searchId === latestSearchId &&
+                !usingSeedTurns &&
+                !suppressHydrationMotion,
               );
 
               return (
