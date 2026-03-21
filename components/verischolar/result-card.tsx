@@ -87,6 +87,11 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
         <span className="rounded-full border border-[var(--line)] px-3 py-2">
           {source.sourceProvider}
         </span>
+        {source.journalTier ? (
+          <span className="rounded-full border border-[var(--line)] px-3 py-2">
+            {source.journalTier}
+          </span>
+        ) : null}
         {source.retractionStatus === "Retracted" ? (
           <span className="rounded-full border border-[rgba(122,45,45,0.2)] bg-[rgba(153,63,63,0.1)] px-3 py-2 text-[var(--danger)]">
             Retracted

@@ -67,10 +67,12 @@ async function callGeminiJson<T>({
     prompt,
     schema,
     temperature = 0.2,
+    timeoutMs = 3000,
 }: {
     prompt: string;
     schema: z.ZodType<T>;
     temperature?: number;
+    timeoutMs?: number;
 }) {
     const config = getGeminiConfig();
 
@@ -97,6 +99,7 @@ async function callGeminiJson<T>({
                 },
             }),
             cache: "no-store",
+            signal: AbortSignal.timeout(timeoutMs),
         },
     );
 
@@ -152,6 +155,7 @@ export async function expandQueryWithGemini(
         ].join("\n"),
         schema: queryExpansionSchema,
         temperature: 0.1,
+        timeoutMs: 700,
     });
 
     if (!result) {
@@ -189,6 +193,7 @@ export async function generateMethodologyNotes(sources: ResearchSource[]) {
         ].join("\n"),
         schema: methodologyNotesSchema,
         temperature: 0.1,
+        timeoutMs: 1200,
     });
 
     if (!result) {
@@ -237,6 +242,7 @@ export async function generateOverallFindingsSummary({
         ].join("\n"),
         schema: overallFindingsSummarySchema,
         temperature: 0.2,
+        timeoutMs: 900,
     });
 
     if (!result) {
@@ -284,6 +290,7 @@ export async function generateSourceInsights({
         ].join("\n"),
         schema: sourceInsightsSchema,
         temperature: 0.2,
+        timeoutMs: 1000,
     });
 
     if (!result) {
@@ -335,6 +342,7 @@ export async function reviewSourceLocalityWithGemini({
         ].join("\n"),
         schema: localityReviewSchema,
         temperature: 0.1,
+        timeoutMs: 700,
     });
 
     if (!result) {
@@ -393,6 +401,7 @@ export async function generateBoardAnalysis({
         ].join("\n"),
         schema: geminiAnalysisPayloadSchema,
         temperature: 0.2,
+        timeoutMs: 12000,
     });
 
     if (!result) {
@@ -501,6 +510,7 @@ export async function evaluateIfGapAddressed(gaps: string[], sources: ResearchSo
         ].join("\n"),
         schema: gapEvaluationSchema,
         temperature: 0.1, // Keep it low so it's strictly analytical
+        timeoutMs: 8000,
     });
 
     if (!result) {

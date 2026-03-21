@@ -135,7 +135,7 @@ export default async function WorkplaceSessionPage({
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.9)] px-4 py-3">
               <p className="text-sm text-[var(--muted)]">
-                Session {session.sessionId} • {session.selectedSourceIds.length}{" "}
+                Session {session.sessionId} | {session.selectedSourceIds.length}{" "}
                 sources
               </p>
               <div className="flex flex-wrap items-center gap-2">

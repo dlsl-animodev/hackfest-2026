@@ -58,7 +58,12 @@ export function ResearchBoard({
         <div className="mt-3 h-3 overflow-hidden rounded-full bg-[rgba(111,91,71,0.08)]">
           <div
             className="h-full rounded-full bg-[linear-gradient(90deg,var(--positive),var(--accent))]"
-            style={{ width: `${Math.max(localRatio, 8)}%` }}
+            style={{
+              width:
+                selectedSources.length === 0
+                  ? "0%"
+                  : `${Math.max(localRatio, 6)}%`,
+            }}
           />
         </div>
       </div>

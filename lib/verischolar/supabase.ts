@@ -12,15 +12,19 @@ import {
 import type {
   AnalysisResult,
   ResearchSource,
+  SearchMode,
   SearchResponse,
   WorkplaceSession,
 } from "@/lib/verischolar/types";
 
 let cachedClient: SupabaseClient | null | undefined;
-const QUERY_CACHE_VERSION = "v3";
+const QUERY_CACHE_VERSION = "v6";
 
-function getVersionedQueryKey(normalizedQuery: string) {
-  return `${QUERY_CACHE_VERSION}:${normalizedQuery}`;
+function getVersionedQueryKey(
+  normalizedQuery: string,
+  searchMode: SearchMode = "all",
+) {
+  return `${QUERY_CACHE_VERSION}:${searchMode}:${normalizedQuery}`;
 }
 
 function getSupabaseAdminClient() {
@@ -49,7 +53,10 @@ function getIsoNow() {
   return new Date().toISOString();
 }
 
-export async function readQueryCache(normalizedQuery: string) {
+export async function readQueryCache(
+  normalizedQuery: string,
+  searchMode: SearchMode = "all",
+) {
   const supabase = getSupabaseAdminClient();
 
   if (!supabase) {
@@ -59,17 +66,47 @@ export async function readQueryCache(normalizedQuery: string) {
   const { data, error } = await supabase
     .from("query_cache")
     .select("query, expanded_query, payload, warnings")
-    .eq("normalized_query", getVersionedQueryKey(normalizedQuery))
+    .eq("normalized_query", getVersionedQueryKey(normalizedQuery, searchMode))
     .maybeSingle();
 
   if (error || !data) {
     return null;
   }
 
+  const payload =
+    typeof data.payload === "object" && data.payload ? data.payload : null;
+  const sources =
+    Array.isArray(data.payload)
+      ? data.payload
+      : payload &&
+          "sources" in payload &&
+          Array.isArray((payload as { sources?: unknown }).sources)
+        ? (payload as { sources: unknown[] }).sources
+        : [];
+  const overallFindingsSummary =
+    payload &&
+    "overallFindingsSummary" in payload &&
+    (typeof (payload as { overallFindingsSummary?: unknown })
+      .overallFindingsSummary === "string" ||
+      (payload as { overallFindingsSummary?: unknown }).overallFindingsSummary ===
+        null)
+      ? ((payload as { overallFindingsSummary: string | null })
+          .overallFindingsSummary ?? null)
+      : null;
+  const cachedSearchMode =
+    payload &&
+    "searchMode" in payload &&
+    ((payload as { searchMode?: unknown }).searchMode === "all" ||
+      (payload as { searchMode?: unknown }).searchMode === "local")
+      ? ((payload as { searchMode: SearchMode }).searchMode ?? searchMode)
+      : searchMode;
+
   const parsed = searchResponseSchema.safeParse({
     query: data.query,
+    searchMode: cachedSearchMode,
     expandedQuery: data.expanded_query,
-    sources: data.payload,
+    overallFindingsSummary,
+    sources,
     fromCache: true,
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
   });
@@ -88,10 +125,15 @@ export async function writeQueryCache(response: SearchResponse) {
     {
       normalized_query: getVersionedQueryKey(
         response.query.trim().toLowerCase(),
+        response.searchMode,
       ),
       query: response.query,
       expanded_query: response.expandedQuery,
-      payload: response.sources,
+      payload: {
+        searchMode: response.searchMode,
+        sources: response.sources,
+        overallFindingsSummary: response.overallFindingsSummary,
+      },
       warnings: response.warnings,
       updated_at: getIsoNow(),
     },
@@ -242,10 +284,12 @@ export async function writeWorkplaceSession({
   const supabase = getSupabaseAdminClient();
 
   if (!supabase) {
-    return;
+    throw new Error(
+      "Workplace storage is not configured. Add Supabase server credentials before creating shared sessions.",
+    );
   }
 
-  await supabase.from("workplace_sessions").insert({
+  const { error } = await supabase.from("workplace_sessions").insert({
     session_id: sessionId,
     query,
     selected_source_ids: selectedSourceIds,
@@ -253,6 +297,12 @@ export async function writeWorkplaceSession({
     created_at: getIsoNow(),
     updated_at: getIsoNow(),
   });
+
+  if (error) {
+    throw new Error(
+      "Workplace session could not be saved right now. Review the synthesis in-place or retry once storage is available.",
+    );
+  }
 }
 
 export async function readWorkplaceSession(

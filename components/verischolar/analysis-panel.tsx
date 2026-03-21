@@ -3,10 +3,11 @@ import Link from "next/link";
 import { CitationHealthRail } from "@/components/verischolar/citation-health-rail";
 import { SparkIcon } from "@/components/verischolar/icons";
 import type { AnalysisActionState } from "@/lib/verischolar/action-state";
-import type { DashboardMetrics } from "@/lib/verischolar/types";
+import type { DashboardMetrics, SearchMode } from "@/lib/verischolar/types";
 
 type AnalysisPanelProps = {
   query: string;
+  searchMode: SearchMode;
   selectedSourceIds: string[];
   action: (payload: FormData) => void;
   actionState: AnalysisActionState;
@@ -17,6 +18,7 @@ type AnalysisPanelProps = {
 
 export function AnalysisPanel({
   query,
+  searchMode,
   selectedSourceIds,
   action,
   actionState,
@@ -47,6 +49,7 @@ export function AnalysisPanel({
 
         <form action={action} className="mt-4">
           <input type="hidden" name="query" value={query} />
+          <input type="hidden" name="searchMode" value={searchMode} />
           {selectedSourceIds.map((sourceId) => (
             <input
               key={sourceId}
@@ -118,20 +121,26 @@ export function AnalysisPanel({
 
             <div className="flex flex-wrap items-center gap-2">
               {actionState.workplaceSessionId ? (
-                <Link
-                  href={`/workplace/${encodeURIComponent(actionState.workplaceSessionId)}`}
-                  className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5"
-                >
-                  <SparkIcon className="h-4 w-4" />
-                  Open Workplace session
-                </Link>
-              ) : null}
-              <Link
-                href="/validate-gap"
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.86)] px-4 py-3 text-sm text-[var(--ink)]"
-              >
-                Validate gap
-              </Link>
+                <>
+                  <Link
+                    href={`/workplace/${encodeURIComponent(actionState.workplaceSessionId)}`}
+                    className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5"
+                  >
+                    <SparkIcon className="h-4 w-4" />
+                    Open Workplace session
+                  </Link>
+                  <Link
+                    href={`/validate-gap?sessionId=${encodeURIComponent(actionState.workplaceSessionId)}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.86)] px-4 py-3 text-sm text-[var(--ink)]"
+                  >
+                    Validate gap
+                  </Link>
+                </>
+              ) : (
+                <p className="text-sm text-[var(--muted)]">
+                  Gap validation opens once the Workplace session is saved.
+                </p>
+              )}
             </div>
           </div>
         ) : (

@@ -1,21 +1,15 @@
 "use client";
 
-import { useState } from "react";
-
 import ValidateGapBoard from "@/components/validate-gap/validate-gap-board";
 import type { AnalysisResult } from "@/lib/verischolar/types";
 
 type WorkplaceValidationSectionProps = {
   analysis: AnalysisResult;
-  initialOpen?: boolean;
 };
 
 export function WorkplaceValidationSection({
   analysis,
-  initialOpen = true,
 }: WorkplaceValidationSectionProps) {
-  const [isOpen, setIsOpen] = useState(initialOpen);
-
   return (
     <section className="rounded-[1.3rem] border border-[var(--line)] bg-[rgba(255,252,245,0.9)] p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">

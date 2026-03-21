@@ -10,7 +10,6 @@ import {
 
 import { ArrowUpIcon } from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
-import { ArrowRightIcon } from "lucide-react";
 
 type PromptComposerProps = {
   initialQuery?: string;
@@ -33,15 +32,24 @@ export function PromptComposer({
   }, [initialQuery]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isPending) {
+      return;
+    }
+
     if (!onSubmitQuery) {
       return;
     }
 
-    event.preventDefault();
     onSubmitQuery(query);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (isPending) {
+      return;
+    }
+
     if (
       event.key !== "Enter" ||
       event.shiftKey ||
