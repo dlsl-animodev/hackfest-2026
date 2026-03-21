@@ -98,7 +98,7 @@ export function WorkspaceClient({
           <p className="text-[0.84rem] tracking-[0.18em] text-[var(--muted)] uppercase">
             Query
           </p>
-          <h2 className="type-display max-w-[20ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.9rem]">
+          <h2 className="max-w-[35ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.9rem]">
             {query}
           </h2>
           <div className="flex flex-wrap items-center gap-2 text-[0.84rem] text-[var(--muted)]">
@@ -177,7 +177,7 @@ export function WorkspaceClient({
           <button
             type="button"
             onClick={handleFindPhilippineOnly}
-            className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-4 py-2 text-[0.82rem] tracking-[0.12em] text-[var(--muted)] uppercase transition-colors duration-200 hover:border-[rgba(93,127,99,0.45)] hover:bg-[rgba(93,127,99,0.08)]"
+            className="rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-[0.82rem] tracking-[0.12em] text-[var(--panel)] transition-colors duration-200 hover:border[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
           >
             Find Local Papers
           </button>

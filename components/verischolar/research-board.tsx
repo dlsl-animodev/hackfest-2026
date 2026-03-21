@@ -96,7 +96,7 @@ export function ResearchBoard({
                 <button
                   type="button"
                   onClick={() => onToggle(source.id)}
-                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-2 text-xs tracking-[0.14em] text-[var(--muted)] uppercase"
+                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-2 text-xs tracking-[0.14em] text-[var(--muted)]"
                 >
                   Remove
                 </button>
