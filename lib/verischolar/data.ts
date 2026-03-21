@@ -9,10 +9,10 @@ import {
   getSemanticScholarApiKey,
 } from "@/lib/verischolar/env";
 import {
-  expandQueryWithGemini,
+  expandQuery,
   generateOverallFindingsSummary,
   generateSourceInsights,
-} from "@/lib/verischolar/gemini";
+} from "@/lib/verischolar/ai";
 import {
   ACADEMIC_VENUE_HINTS,
   PHILIPPINE_DOMAIN_HINTS,
@@ -1308,18 +1308,18 @@ export const getSearchResponse = cache(
     let expandedQuery: string | null = null;
 
     try {
-      const expansion = await expandQueryWithGemini(rawQuery);
+      const expansion = await expandQuery(rawQuery);
 
       if (expansion) {
         expandedQuery = expansion.expandedQuery;
       } else {
         warnings.add(
-          "Gemini query expansion is unavailable, so the raw research question was used.",
+          "AI query expansion is unavailable, so the raw research question was used.",
         );
       }
     } catch {
       warnings.add(
-        "Gemini query expansion failed, so the raw research question was used.",
+        "AI query expansion failed, so the raw research question was used.",
       );
     }
 
@@ -1409,7 +1409,7 @@ export const getSearchResponse = cache(
         });
 
         warnings.add(
-          "Gemini source insights are unavailable, so per-source Summary and Key finding were generated with abstract slicing fallback.",
+          "AI source insights are unavailable, so per-source Summary and Key finding were generated with abstract slicing fallback.",
         );
       }
     } catch {
@@ -1426,7 +1426,7 @@ export const getSearchResponse = cache(
       });
 
       warnings.add(
-        "Gemini source insights failed, so per-source Summary and Key finding were generated with abstract slicing fallback.",
+        "AI source insights failed, so per-source Summary and Key finding were generated with abstract slicing fallback.",
       );
     }
 

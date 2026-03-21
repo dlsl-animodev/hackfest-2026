@@ -1,9 +1,9 @@
 "use server";
 
 import { getSearchResponse } from "@/lib/verischolar/data";
-import { evaluateIfGapAddressed } from "@/lib/verischolar/gemini";
+import { evaluateIfGapAddressed } from "@/lib/verischolar/ai";
 import type { SearchResponse } from "@/lib/verischolar/types";
-import { generateBoardAnalysis } from "@/lib/verischolar/gemini";
+import { generateBoardAnalysis } from "@/lib/verischolar/ai";
 import type { ResearchSource } from "@/lib/verischolar/types";
 
 export type AgentStepResult = {
