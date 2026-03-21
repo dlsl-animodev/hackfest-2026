@@ -46,9 +46,7 @@ async function SearchExperience({ searchParams }: PageProps) {
 export default function Page(props: PageProps) {
   const resolvedSearchParams = props.searchParams;
 
-  return (
-    <PageContent searchParams={resolvedSearchParams} />
-  );
+  return <PageContent searchParams={resolvedSearchParams} />;
 }
 
 async function PageContent({ searchParams }: PageProps) {

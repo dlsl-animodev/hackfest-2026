@@ -1,21 +1,27 @@
+"use client";
+
 import Link from "next/link";
 
 import { BrandGlyph } from "@/components/verischolar/icons";
+import { useSearchSessionStore } from "@/store/useSearchSessionStore";
 
 type TopBarProps = {
   compact?: boolean;
 };
 
 export function TopBar({ compact = false }: TopBarProps) {
+  const pendingSearch = useSearchSessionStore((state) => state.pendingSearch);
+  const isCompact = compact || Boolean(pendingSearch);
+
   return (
     <header
       className={`sticky top-0 z-30 px-4 sm:px-6 lg:px-10 ${
-        compact ? "pt-2" : "pt-3"
+        isCompact ? "pt-2" : "pt-3"
       }`}
     >
       <div
         className={`flex items-center rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] shadow-[var(--shadow-soft)] backdrop-blur-xl ${
-          compact
+          isCompact
             ? "mr-auto w-fit px-2.5 py-1.5"
             : "mx-auto max-w-[1120px] justify-between px-4 py-2.5 sm:px-5"
         }`}
@@ -23,19 +29,21 @@ export function TopBar({ compact = false }: TopBarProps) {
         <Link
           href="/"
           className={`group inline-flex items-center text-[var(--ink)] uppercase ${
-            compact
+            isCompact
               ? "gap-0"
               : "gap-3 text-[0.97rem] font-semibold tracking-[0.18em]"
           }`}
         >
           <span
             className={`flex items-center justify-center rounded-full border border-[var(--line-strong)] bg-[rgba(255,255,255,0.72)] text-[var(--accent)] shadow-[0_10px_26px_rgba(60,35,14,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 ${
-              compact ? "h-8 w-8" : "h-9 w-9"
+              isCompact ? "h-8 w-8" : "h-9 w-9"
             }`}
           >
-            <BrandGlyph className={compact ? "h-4 w-4" : "h-[1.125rem] w-[1.125rem]"} />
+            <BrandGlyph
+              className={isCompact ? "h-4 w-4" : "h-[1.125rem] w-[1.125rem]"}
+            />
           </span>
-          {compact ? null : (
+          {isCompact ? null : (
             <span className="type-display text-[1rem] tracking-[0.1em] normal-case sm:text-[1.06rem]">
               veriScholar
             </span>
