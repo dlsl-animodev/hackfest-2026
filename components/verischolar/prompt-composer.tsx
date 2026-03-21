@@ -118,10 +118,7 @@ export function PromptComposer({
       </form>
 
       {!compact ? (
-        <SuggestionChips
-          compact={compact}
-          onSelectSuggestion={onSubmitQuery}
-        />
+        <SuggestionChips compact={compact} onSelectSuggestion={onSubmitQuery} />
       ) : null}
     </div>
   );

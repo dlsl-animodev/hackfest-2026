@@ -154,7 +154,9 @@ export function WorkspaceClient({
               <p className="text-[0.82rem] tracking-[0.14em] text-[var(--muted)] uppercase">
                 {stat.label}
               </p>
-              <p className="mt-2 text-[1.02rem] text-[var(--ink)]">{stat.value}</p>
+              <p className="mt-2 text-[1.02rem] text-[var(--ink)]">
+                {stat.value}
+              </p>
             </div>
           ))}
         </div>

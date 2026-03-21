@@ -1,4 +1,8 @@
-import { ArrowUpRightIcon, PinIcon, ShieldIcon } from "@/components/verischolar/icons";
+import {
+  ArrowUpRightIcon,
+  PinIcon,
+  ShieldIcon,
+} from "@/components/verischolar/icons";
 import { CredibilityBadge } from "@/components/verischolar/credibility-badge";
 import { LocalityPill } from "@/components/verischolar/locality-pill";
 import type { ResearchSource } from "@/lib/verischolar/types";
@@ -10,7 +14,9 @@ type ResultCardProps = {
 };
 
 export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
-  const venueLine = [source.journal, source.publisher].filter(Boolean).join(" | ");
+  const venueLine = [source.journal, source.publisher]
+    .filter(Boolean)
+    .join(" | ");
 
   return (
     <article
@@ -113,7 +119,9 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
           <p className="text-[0.76rem] tracking-[0.14em] text-[var(--muted)] uppercase">
             Methodology note
           </p>
-          <p className="mt-2 line-clamp-3">{source.credibility.methodologyNote}</p>
+          <p className="mt-2 line-clamp-3">
+            {source.credibility.methodologyNote}
+          </p>
         </div>
       ) : null}
 
@@ -142,7 +150,9 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
             <ArrowUpRightIcon className="h-4 w-4" />
           </a>
         ) : (
-          <span className="text-sm text-[var(--muted)]">Source URL unavailable</span>
+          <span className="text-sm text-[var(--muted)]">
+            Source URL unavailable
+          </span>
         )}
       </div>
     </article>
