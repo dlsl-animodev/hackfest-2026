@@ -9,6 +9,7 @@ import { getDashboardMetrics } from "@/lib/verischolar/citations";
 import { getWorkspaceRevealMotion } from "@/lib/verischolar/motion";
 import type { SearchResponse } from "@/lib/verischolar/types";
 import { useResearchBoardStore } from "@/store/useResearchBoardStore";
+import { useSearchSessionStore } from "@/store/useSearchSessionStore";
 
 type WorkspaceClientProps = {
   searchResponse: SearchResponse;
@@ -35,6 +36,7 @@ export function WorkspaceClient({
   const initializeBoard = useResearchBoardStore(
     (state) => state.initializeBoard,
   );
+  const startSearch = useSearchSessionStore((state) => state.startSearch);
 
   useEffect(() => {
     initializeBoard(query, sources);
@@ -50,22 +52,39 @@ export function WorkspaceClient({
       : `${sources.length} ranked sources`;
   const workspaceMotion = getWorkspaceRevealMotion(Boolean(reduceMotion));
 
+  const PHILIPPINE_FOCUS_CLAUSE =
+    '(Philippines OR Philippine OR "Metro Manila" OR Luzon OR Visayas OR Mindanao OR ".edu.ph" OR ".gov.ph" OR "University of the Philippines" OR Ateneo OR "De La Salle" OR UST)';
+
   function buildPhilippineOnlyQuery(baseQuery: string) {
     const trimmed = baseQuery.trim();
 
     if (!trimmed) {
-      return "Philippines-based peer reviewed research";
+      return `("public health" OR "economics" OR "education" OR "agriculture") AND ${PHILIPPINE_FOCUS_CLAUSE} AND ("peer reviewed" OR journal)`;
     }
 
-    return `${trimmed} AND (Philippines OR Philippine OR \"Metro Manila\" OR Luzon OR Visayas OR Mindanao OR \"University of the Philippines\" OR \".edu.ph\" OR \".gov.ph\")`;
+    const sanitized = trimmed
+      .replace(/\s+AND\s*\(.+?\.edu\.ph.+?\.gov\.ph.+?\)$/i, "")
+      .trim();
+
+    return `${sanitized} AND ${PHILIPPINE_FOCUS_CLAUSE} AND ("local study" OR "Philippine context" OR "country: Philippines")`;
   }
 
   function handleFindPhilippineOnly() {
     const nextQuery = buildPhilippineOnlyQuery(query);
+    const href = `${pathname}?q=${encodeURIComponent(nextQuery)}`;
+    const searchId = startSearch(nextQuery);
 
-    router.push(`${pathname}?q=${encodeURIComponent(nextQuery)}`, {
-      scroll: false,
-    });
+    if (!searchId) {
+      return;
+    }
+
+    if (nextQuery === query.trim()) {
+      router.replace(href, { scroll: false });
+      router.refresh();
+      return;
+    }
+
+    router.push(href, { scroll: false });
   }
 
   return (
@@ -84,7 +103,7 @@ export function WorkspaceClient({
           </h2>
           <div className="flex flex-wrap items-center gap-2 text-[0.84rem] text-[var(--muted)]">
             {expandedQuery && expandedQuery !== query ? (
-              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-3 py-1.5">
+              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-5 py-3">
                 Expanded search: {expandedQuery}
               </span>
             ) : null}
