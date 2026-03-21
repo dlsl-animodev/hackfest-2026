@@ -23,7 +23,9 @@ export const useResearchBoardStore = create<ResearchBoardState>((set, get) => ({
   selectedIds: [],
   initializeBoard: (query, sources) => {
     const current = get();
-    const currentSignature = current.sources.map((source) => source.id).join("|");
+    const currentSignature = current.sources
+      .map((source) => source.id)
+      .join("|");
     const nextSignature = sources.map((source) => source.id).join("|");
 
     if (current.query === query && currentSignature === nextSignature) {

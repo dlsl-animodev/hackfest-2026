@@ -44,13 +44,31 @@ async function SearchExperience({ searchParams }: PageProps) {
 }
 
 export default function Page(props: PageProps) {
+  const resolvedSearchParams = props.searchParams;
+
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <TopBar />
+    <PageContent searchParams={resolvedSearchParams} />
+  );
+}
+
+async function PageContent({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const hasQuery = Boolean(getQueryValue(params.q));
+
+  return (
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={
+        {
+          "--topbar-height": hasQuery ? "3.45rem" : "5rem",
+        } as React.CSSProperties
+      }
+    >
+      <TopBar compact={hasQuery} />
 
       <main className="relative flex min-h-[calc(100vh-5rem)] flex-col">
         <Suspense fallback={<WorkspaceSkeleton />}>
-          <SearchExperience {...props} />
+          <SearchExperience searchParams={searchParams} />
         </Suspense>
       </main>
     </div>

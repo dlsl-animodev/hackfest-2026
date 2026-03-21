@@ -32,7 +32,9 @@ export function WorkspaceClient({
   const reduceMotion = useReducedMotion();
   const selectedIds = useResearchBoardStore((state) => state.selectedIds);
   const toggleSource = useResearchBoardStore((state) => state.toggleSource);
-  const initializeBoard = useResearchBoardStore((state) => state.initializeBoard);
+  const initializeBoard = useResearchBoardStore(
+    (state) => state.initializeBoard,
+  );
 
   useEffect(() => {
     initializeBoard(query, sources);

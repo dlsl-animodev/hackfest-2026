@@ -237,7 +237,7 @@ export function SearchSessionShell({
       </div>
 
       {hasConversation ? (
-        <aside className="fixed bottom-0 right-0 top-[5.75rem] z-10 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block">
+        <aside className="ui-enter-right fixed bottom-0 right-0 top-[var(--topbar-height)] z-30 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block rounded-4xl">
           <div className="space-y-4">
             <div className="space-y-2">
               <ResearchBoard
