@@ -96,6 +96,7 @@ export const researchSourceSchema = z
         localReason: z.string().min(1),
         retractionStatus: retractionStatusSchema,
         predatoryStatus: predatoryStatusSchema,
+        predatoryMatchReasons: z.array(z.string()),
         missingFields: z.array(z.string()),
         credibility: credibilitySummarySchema,
     })

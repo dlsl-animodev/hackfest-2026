@@ -88,6 +88,7 @@ export type ResearchSource = {
   localReason: string;
   retractionStatus: RetractionStatus;
   predatoryStatus: PredatoryStatus;
+  predatoryMatchReasons: string[];
   missingFields: string[];
   credibility: CredibilitySummary;
 };

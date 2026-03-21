@@ -30,16 +30,28 @@ export const PHILIPPINE_JOURNAL_REGISTRY = [
   "the normal lights",
 ];
 
-export const PREDATORY_VENUE_PATTERNS = [
-  "american journal of",
+export const PREDATORY_VENUE_HIGH_CONFIDENCE_PATTERNS = [
   "global frontier",
-  "global journal of",
   "international journal of creative research thoughts",
   "international open research review",
-  "journal of advances in",
   "journalnx",
   "world academy of advanced studies",
+];
+
+export const PREDATORY_VENUE_WEAK_PATTERNS = [
+  "american journal of",
+  "global journal of",
+  "journal of advances in",
   "world journal of",
+];
+
+// Legitimate venues that can contain weak patterns like "american journal of".
+export const PREDATORY_SAFE_VENUE_PATTERNS = [
+  "american journal of clinical nutrition",
+  "american journal of epidemiology",
+  "american journal of medicine",
+  "american journal of psychiatry",
+  "american journal of public health",
 ];
 
 export const ACADEMIC_VENUE_HINTS = [

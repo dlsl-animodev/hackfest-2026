@@ -18,7 +18,9 @@ import {
   PHILIPPINE_DOMAIN_HINTS,
   PHILIPPINE_INSTITUTION_KEYWORDS,
   PHILIPPINE_JOURNAL_REGISTRY,
-  PREDATORY_VENUE_PATTERNS,
+  PREDATORY_SAFE_VENUE_PATTERNS,
+  PREDATORY_VENUE_HIGH_CONFIDENCE_PATTERNS,
+  PREDATORY_VENUE_WEAK_PATTERNS,
 } from "@/lib/verischolar/lookup-data";
 import {
   readQueryCache,
@@ -545,15 +547,54 @@ function getRecencyBand(year: number | null): RecencyBand {
 }
 
 function matchPredatoryVenue(journal: string | null, publisher: string | null) {
-  const haystack = `${journal ?? ""} ${publisher ?? ""}`.toLowerCase();
+  const normalizedJournal = (journal ?? "").toLowerCase();
+  const normalizedPublisher = (publisher ?? "").toLowerCase();
+  const haystack = `${normalizedJournal} ${normalizedPublisher}`.trim();
 
-  if (!haystack.trim()) {
-    return "Unknown" as const;
+  if (!haystack) {
+    return {
+      status: "Unknown" as const,
+      reasons: [] as string[],
+    };
   }
 
-  return PREDATORY_VENUE_PATTERNS.some((pattern) => haystack.includes(pattern))
-    ? ("Predatory" as const)
-    : ("Clear" as const);
+  const safeMatches = PREDATORY_SAFE_VENUE_PATTERNS.filter((pattern) =>
+    haystack.includes(pattern),
+  );
+
+  if (safeMatches.length > 0) {
+    return {
+      status: "Clear" as const,
+      reasons: [],
+    };
+  }
+
+  const highConfidenceMatches = PREDATORY_VENUE_HIGH_CONFIDENCE_PATTERNS.filter(
+    (pattern) => haystack.includes(pattern),
+  );
+
+  if (highConfidenceMatches.length > 0) {
+    return {
+      status: "Predatory" as const,
+      reasons: highConfidenceMatches,
+    };
+  }
+
+  const weakMatches = PREDATORY_VENUE_WEAK_PATTERNS.filter((pattern) =>
+    haystack.includes(pattern),
+  );
+
+  if (weakMatches.length >= 2) {
+    return {
+      status: "Predatory" as const,
+      reasons: weakMatches,
+    };
+  }
+
+  return {
+    status: "Clear" as const,
+    reasons: [],
+  };
 }
 
 function matchPhilippineJournal(journal: string | null) {
@@ -790,6 +831,7 @@ function buildCredibility({
   year,
   retractionStatus,
   predatoryStatus,
+  predatoryMatchReasons,
   journalQuality,
   methodologyNote,
   missingFields,
@@ -799,6 +841,7 @@ function buildCredibility({
   year: number | null;
   retractionStatus: RetractionStatus;
   predatoryStatus: PredatoryStatus;
+  predatoryMatchReasons: string[];
   journalQuality: JournalQuality;
   methodologyNote: string | null;
   missingFields: string[];
@@ -838,7 +881,9 @@ function buildCredibility({
       value: "Predatory pattern match",
       effect: "negative",
       reason:
-        "The venue or publisher matches the checked-in predatory watchlist.",
+        predatoryMatchReasons.length > 0
+          ? `Matched flagged venue patterns: ${predatoryMatchReasons.join(", ")}.`
+          : "The venue or publisher matches the checked-in predatory watchlist.",
     });
   } else if (predatoryStatus === "Clear") {
     scoreInputs.push({
@@ -1025,10 +1070,11 @@ function toResearchSource(
     methodologyNote: string | null;
   },
 ): ResearchSource {
-  const predatoryStatus = matchPredatoryVenue(
+  const predatoryMatch = matchPredatoryVenue(
     candidate.journal,
     candidate.publisher,
   );
+  const predatoryStatus = predatoryMatch.status;
   const locality = getLocality({
     affiliations: candidate.affiliations,
     countryCodes: candidate.countryCodes,
@@ -1065,12 +1111,14 @@ function toResearchSource(
     localReason: locality.localReason,
     retractionStatus: candidate.retractionStatus,
     predatoryStatus,
+    predatoryMatchReasons: predatoryMatch.reasons,
     missingFields,
     credibility: buildCredibility({
       citationCount: candidate.citationCount,
       year: candidate.year,
       retractionStatus: candidate.retractionStatus,
       predatoryStatus,
+      predatoryMatchReasons: predatoryMatch.reasons,
       journalQuality,
       methodologyNote,
       missingFields,
