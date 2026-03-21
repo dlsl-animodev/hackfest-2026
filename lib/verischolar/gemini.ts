@@ -5,6 +5,7 @@ import { gapEvaluationSchema } from "@/lib/verischolar/schemas";
 
 import {
     geminiAnalysisPayloadSchema,
+    localityReviewSchema,
     methodologyNotesSchema,
     overallFindingsSummarySchema,
     queryExpansionSchema,
@@ -300,6 +301,50 @@ export async function generateSourceInsights({
                     methodologyNote: entry.methodologyNote,
                 },
             ]),
+        ),
+    };
+}
+
+export async function reviewSourceLocalityWithGemini({
+    sources,
+}: {
+    sources: Array<{
+        sourceId: string;
+        title: string;
+        journal: string | null;
+        publisher: string | null;
+        publicationCountryCode: string | null;
+        url: string | null;
+        affiliations: string[];
+        countryCodes: string[];
+    }>;
+}) {
+    if (sources.length === 0) {
+        return null;
+    }
+
+    const result = await callGeminiJson({
+        prompt: [
+            "You classify paper locality for a Philippine research dashboard using metadata only.",
+            "Labels allowed: Local, Foreign, Unknown.",
+            "Use Local only if metadata clearly indicates Philippines (publicationCountryCode PH, affiliation country PH, explicit PH institution, or reliable .edu.ph/.gov.ph domain).",
+            "Use Foreign when metadata clearly points to a non-PH country.",
+            "Use Unknown when evidence is weak. Do not guess.",
+            "Return JSON array with keys sourceId, localityLabel, localReason.",
+            JSON.stringify(sources.slice(0, 12)),
+        ].join("\n"),
+        schema: localityReviewSchema,
+        temperature: 0.1,
+    });
+
+    if (!result) {
+        return null;
+    }
+
+    return {
+        model: result.model,
+        localityBySourceId: Object.fromEntries(
+            result.data.map((entry) => [entry.sourceId, entry]),
         ),
     };
 }

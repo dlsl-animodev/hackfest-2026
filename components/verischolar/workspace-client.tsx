@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { m, useReducedMotion } from "framer-motion";
+import { usePathname, useRouter } from "next/navigation";
 
 import { analyzeBoardAction } from "@/app/actions";
 import { AnalysisPanel } from "@/components/verischolar/analysis-panel";
@@ -43,6 +44,8 @@ export function WorkspaceClient({
   searchResponse,
   animateOnMount = false,
 }: WorkspaceClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
   const {
     query,
     sources,
@@ -101,6 +104,24 @@ export function WorkspaceClient({
     await navigator.clipboard.writeText(citationExport);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function buildPhilippineOnlyQuery(baseQuery: string) {
+    const trimmed = baseQuery.trim();
+
+    if (!trimmed) {
+      return "Philippines-based peer reviewed research";
+    }
+
+    return `${trimmed} AND (Philippines OR Philippine OR \"Metro Manila\" OR Luzon OR Visayas OR Mindanao OR \"University of the Philippines\" OR \".edu.ph\" OR \".gov.ph\")`;
+  }
+
+  function handleFindPhilippineOnly() {
+    const nextQuery = buildPhilippineOnlyQuery(query);
+
+    router.push(`${pathname}?q=${encodeURIComponent(nextQuery)}`, {
+      scroll: false,
+    });
   }
 
   return (
@@ -190,6 +211,14 @@ export function WorkspaceClient({
               Results are ranked by credibility, citation momentum, venue
               quality, and recency so the strongest candidates surface faster.
             </p>
+
+            <button
+              type="button"
+              onClick={handleFindPhilippineOnly}
+              className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-4 py-2 text-[0.82rem] tracking-[0.12em] text-[var(--muted)] uppercase transition-colors duration-200 hover:border-[rgba(93,127,99,0.45)] hover:bg-[rgba(93,127,99,0.08)]"
+            >
+              Find Local Papers
+            </button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

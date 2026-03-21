@@ -11,6 +11,7 @@ import {
 import {
   expandQuery,
   generateOverallFindingsSummary,
+  reviewSourceLocality,
   generateSourceInsights,
 } from "@/lib/verischolar/ai";
 import {
@@ -18,7 +19,9 @@ import {
   PHILIPPINE_DOMAIN_HINTS,
   PHILIPPINE_INSTITUTION_KEYWORDS,
   PHILIPPINE_JOURNAL_REGISTRY,
-  PREDATORY_VENUE_PATTERNS,
+  PREDATORY_SAFE_VENUE_PATTERNS,
+  PREDATORY_VENUE_HIGH_CONFIDENCE_PATTERNS,
+  PREDATORY_VENUE_WEAK_PATTERNS,
 } from "@/lib/verischolar/lookup-data";
 import {
   readQueryCache,
@@ -72,6 +75,7 @@ type OpenAlexAuthorship = {
 type OpenAlexSource = {
   display_name?: string;
   host_organization_name?: string;
+  country_code?: string;
 };
 
 type OpenAlexWork = {
@@ -103,6 +107,7 @@ type CrossrefUpdate = {
 type CrossrefWorkMessage = {
   DOI?: string;
   publisher?: string;
+  "publisher-location"?: string;
   relation?: Record<string, unknown>;
   "update-to"?: CrossrefUpdate[];
   "updated-by"?: CrossrefUpdate[];
@@ -114,6 +119,7 @@ type CrossrefResponse = {
 
 type CrossrefStatus = {
   publisher: string | null;
+  publisherLocation: string | null;
   retractionStatus: RetractionStatus;
   evidence: string;
 };
@@ -133,6 +139,7 @@ type NormalizedCandidate = {
   citationCount: number | null;
   affiliations: string[];
   countryCodes: string[];
+  publicationCountryCode: string | null;
   retractionStatus: RetractionStatus;
   retractionEvidence: string;
 };
@@ -177,6 +184,44 @@ function normalizeTitle(title: string | null | undefined) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
+}
+
+function getTitleTokenSet(title: string | null | undefined) {
+  const normalized = normalizeTitle(title);
+
+  if (!normalized) {
+    return new Set<string>();
+  }
+
+  return new Set(
+    normalized
+      .split(" ")
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 3),
+  );
+}
+
+function getTitleSimilarity(
+  left: string | null | undefined,
+  right: string | null | undefined,
+) {
+  const leftSet = getTitleTokenSet(left);
+  const rightSet = getTitleTokenSet(right);
+
+  if (leftSet.size === 0 || rightSet.size === 0) {
+    return 0;
+  }
+
+  let intersection = 0;
+
+  for (const token of leftSet) {
+    if (rightSet.has(token)) {
+      intersection += 1;
+    }
+  }
+
+  const union = leftSet.size + rightSet.size - intersection;
+  return union === 0 ? 0 : intersection / union;
 }
 
 function uniqueStrings(values: Array<string | null | undefined>) {
@@ -307,7 +352,23 @@ async function fetchOpenAlexEnrichment({
   }
 
   const results = await fetchOpenAlexSearch(title);
-  return results[0] ?? null;
+
+  if (results.length === 0) {
+    return null;
+  }
+
+  const bestByTitle = results
+    .map((work) => ({
+      work,
+      score: getTitleSimilarity(title, work.display_name ?? work.title ?? null),
+    }))
+    .sort((left, right) => right.score - left.score)[0];
+
+  if (!bestByTitle || bestByTitle.score < 0.55) {
+    return null;
+  }
+
+  return bestByTitle.work;
 }
 
 function rebuildAbstract(index: Record<string, number[]> | undefined) {
@@ -459,9 +520,16 @@ async function getCrossrefStatus(
       payload && "publisher" in payload && typeof payload.publisher === "string"
         ? payload.publisher
         : null;
+    const publisherLocation =
+      payload &&
+      "publisherLocation" in payload &&
+      typeof payload.publisherLocation === "string"
+        ? payload.publisherLocation
+        : null;
 
     return {
       publisher,
+      publisherLocation,
       retractionStatus:
         cached.status === "Retracted" || cached.status === "Clear"
           ? cached.status
@@ -486,18 +554,21 @@ async function getCrossrefStatus(
       status: status.retractionStatus,
       payload: {
         publisher: message?.publisher ?? null,
+        publisherLocation: message?.["publisher-location"] ?? null,
         crossref: message ?? null,
       },
     });
 
     return {
       publisher: message?.publisher ?? null,
+      publisherLocation: message?.["publisher-location"] ?? null,
       retractionStatus: status.retractionStatus,
       evidence: status.evidence,
     };
   } catch {
     return {
       publisher: null,
+      publisherLocation: null,
       retractionStatus: "Unknown",
       evidence: "Crossref metadata was unavailable during this lookup.",
     };
@@ -545,15 +616,54 @@ function getRecencyBand(year: number | null): RecencyBand {
 }
 
 function matchPredatoryVenue(journal: string | null, publisher: string | null) {
-  const haystack = `${journal ?? ""} ${publisher ?? ""}`.toLowerCase();
+  const normalizedJournal = (journal ?? "").toLowerCase();
+  const normalizedPublisher = (publisher ?? "").toLowerCase();
+  const haystack = `${normalizedJournal} ${normalizedPublisher}`.trim();
 
-  if (!haystack.trim()) {
-    return "Unknown" as const;
+  if (!haystack) {
+    return {
+      status: "Unknown" as const,
+      reasons: [] as string[],
+    };
   }
 
-  return PREDATORY_VENUE_PATTERNS.some((pattern) => haystack.includes(pattern))
-    ? ("Predatory" as const)
-    : ("Clear" as const);
+  const safeMatches = PREDATORY_SAFE_VENUE_PATTERNS.filter((pattern) =>
+    haystack.includes(pattern),
+  );
+
+  if (safeMatches.length > 0) {
+    return {
+      status: "Clear" as const,
+      reasons: [],
+    };
+  }
+
+  const highConfidenceMatches = PREDATORY_VENUE_HIGH_CONFIDENCE_PATTERNS.filter(
+    (pattern) => haystack.includes(pattern),
+  );
+
+  if (highConfidenceMatches.length > 0) {
+    return {
+      status: "Predatory" as const,
+      reasons: highConfidenceMatches,
+    };
+  }
+
+  const weakMatches = PREDATORY_VENUE_WEAK_PATTERNS.filter((pattern) =>
+    haystack.includes(pattern),
+  );
+
+  if (weakMatches.length >= 2) {
+    return {
+      status: "Predatory" as const,
+      reasons: weakMatches,
+    };
+  }
+
+  return {
+    status: "Clear" as const,
+    reasons: [],
+  };
 }
 
 function matchPhilippineJournal(journal: string | null) {
@@ -606,17 +716,57 @@ function getHostname(url: string | null) {
   }
 }
 
+function isPhilippineAffiliation(affiliations: string[]) {
+  const normalizedAffiliations = affiliations.map((value) => value.toLowerCase());
+
+  return normalizedAffiliations.some((affiliation) =>
+    PHILIPPINE_INSTITUTION_KEYWORDS.some((keyword) => affiliation.includes(keyword)),
+  );
+}
+
+function getPublisherLocationCountryCode(location: string | null) {
+  if (!location) {
+    return null;
+  }
+
+  const normalized = location.toLowerCase();
+
+  if (normalized.includes("philippines")) {
+    return "PH";
+  }
+
+  return null;
+}
+
 function getLocality({
+  publicationCountryCode,
   affiliations,
   countryCodes,
   journal,
   url,
 }: {
+  publicationCountryCode: string | null;
   affiliations: string[];
   countryCodes: string[];
   journal: string | null;
   url: string | null;
 }) {
+  if (publicationCountryCode === "PH") {
+    return {
+      localityLabel: "Local" as const,
+      localReason:
+        "Publication venue metadata reports a Philippine country code.",
+    };
+  }
+
+  if (publicationCountryCode && publicationCountryCode !== "PH") {
+    return {
+      localityLabel: "Foreign" as const,
+      localReason:
+        "Publication venue metadata reports a non-Philippine country code.",
+    };
+  }
+
   if (countryCodes.includes("PH")) {
     return {
       localityLabel: "Local" as const,
@@ -625,17 +775,11 @@ function getLocality({
     };
   }
 
-  const affiliationsText = affiliations.join(" ").toLowerCase();
-
-  if (
-    PHILIPPINE_INSTITUTION_KEYWORDS.some((keyword) =>
-      affiliationsText.includes(keyword),
-    )
-  ) {
+  if (isPhilippineAffiliation(affiliations)) {
     return {
       localityLabel: "Local" as const,
       localReason:
-        "Author affiliations match a checked Philippine institution keyword.",
+        "Author affiliations match checked Philippine institution names.",
     };
   }
 
@@ -752,6 +896,8 @@ function mergeCandidates(
       ...existing.countryCodes,
       ...incoming.countryCodes,
     ]),
+    publicationCountryCode:
+      existing.publicationCountryCode ?? incoming.publicationCountryCode,
     retractionStatus:
       scoreRetractionStatus(existing.retractionStatus) >=
       scoreRetractionStatus(incoming.retractionStatus)
@@ -790,6 +936,7 @@ function buildCredibility({
   year,
   retractionStatus,
   predatoryStatus,
+  predatoryMatchReasons,
   journalQuality,
   methodologyNote,
   missingFields,
@@ -799,6 +946,7 @@ function buildCredibility({
   year: number | null;
   retractionStatus: RetractionStatus;
   predatoryStatus: PredatoryStatus;
+  predatoryMatchReasons: string[];
   journalQuality: JournalQuality;
   methodologyNote: string | null;
   missingFields: string[];
@@ -838,7 +986,9 @@ function buildCredibility({
       value: "Predatory pattern match",
       effect: "negative",
       reason:
-        "The venue or publisher matches the checked-in predatory watchlist.",
+        predatoryMatchReasons.length > 0
+          ? `Matched flagged venue patterns: ${predatoryMatchReasons.join(", ")}.`
+          : "The venue or publisher matches the checked-in predatory watchlist.",
     });
   } else if (predatoryStatus === "Clear") {
     scoreInputs.push({
@@ -1025,11 +1175,13 @@ function toResearchSource(
     methodologyNote: string | null;
   },
 ): ResearchSource {
-  const predatoryStatus = matchPredatoryVenue(
+  const predatoryMatch = matchPredatoryVenue(
     candidate.journal,
     candidate.publisher,
   );
+  const predatoryStatus = predatoryMatch.status;
   const locality = getLocality({
+    publicationCountryCode: candidate.publicationCountryCode,
     affiliations: candidate.affiliations,
     countryCodes: candidate.countryCodes,
     journal: candidate.journal,
@@ -1058,6 +1210,7 @@ function toResearchSource(
     citationCount: candidate.citationCount,
     affiliations: candidate.affiliations,
     countryCodes: candidate.countryCodes,
+    publicationCountryCode: candidate.publicationCountryCode,
     sourceProvider: candidate.sourceProvider,
     paperId: candidate.paperId,
     openAlexId: candidate.openAlexId,
@@ -1065,17 +1218,84 @@ function toResearchSource(
     localReason: locality.localReason,
     retractionStatus: candidate.retractionStatus,
     predatoryStatus,
+    predatoryMatchReasons: predatoryMatch.reasons,
     missingFields,
     credibility: buildCredibility({
       citationCount: candidate.citationCount,
       year: candidate.year,
       retractionStatus: candidate.retractionStatus,
       predatoryStatus,
+      predatoryMatchReasons: predatoryMatch.reasons,
       journalQuality,
       methodologyNote,
       missingFields,
       retractionEvidence: candidate.retractionEvidence,
     }),
+  };
+}
+
+async function enhanceUnknownLocalityWithAi(sources: ResearchSource[]) {
+  const candidates = sources.filter((source) => source.localityLabel === "Unknown");
+
+  if (candidates.length === 0) {
+    return {
+      sources,
+      updatedCount: 0,
+    };
+  }
+
+  const reviewed = await reviewSourceLocality({
+    sources: candidates.map((source) => ({
+      sourceId: source.id,
+      title: source.title,
+      journal: source.journal,
+      publisher: source.publisher,
+      publicationCountryCode: source.publicationCountryCode,
+      url: source.url,
+      affiliations: source.affiliations,
+      countryCodes: source.countryCodes,
+    })),
+  });
+
+  if (!reviewed) {
+    return {
+      sources,
+      updatedCount: 0,
+    };
+  }
+
+  let updatedCount = 0;
+
+  const nextSources = sources.map((source) => {
+    const localReview = reviewed.localityBySourceId[source.id];
+
+    if (!localReview) {
+      return source;
+    }
+
+    if (source.localityLabel !== "Unknown") {
+      return source;
+    }
+
+    if (
+      source.localityLabel === localReview.localityLabel &&
+      source.localReason === localReview.localReason
+    ) {
+      return source;
+    }
+
+    updatedCount += 1;
+
+    return {
+      ...source,
+      localityLabel: localReview.localityLabel,
+      localReason: localReview.localReason,
+    };
+  });
+
+  return {
+    sources: nextSources,
+    updatedCount,
   };
 }
 
@@ -1130,6 +1350,9 @@ async function normalizeSemanticScholarPaper(paper: SemanticScholarPaper) {
   const openAlexAbstract = rebuildAbstract(openAlex?.abstract_inverted_index);
   const openAlexJournal =
     openAlex?.primary_location?.source?.display_name ?? null;
+  const publicationCountryCode =
+    openAlex?.primary_location?.source?.country_code ??
+    getPublisherLocationCountryCode(crossref?.publisherLocation ?? null);
 
   return {
     sourceProvider: "Semantic Scholar" as const,
@@ -1155,6 +1378,7 @@ async function normalizeSemanticScholarPaper(paper: SemanticScholarPaper) {
     citationCount: paper.citationCount ?? openAlex?.cited_by_count ?? null,
     affiliations: openAlex ? getOpenAlexAffiliations(openAlex) : [],
     countryCodes: openAlex ? getOpenAlexCountryCodes(openAlex) : [],
+    publicationCountryCode,
     retractionStatus:
       crossref?.retractionStatus ??
       (openAlex?.is_retracted === true
@@ -1175,6 +1399,9 @@ async function normalizeSemanticScholarPaper(paper: SemanticScholarPaper) {
 async function normalizeOpenAlexWork(work: OpenAlexWork) {
   const doi = normalizeDoi(work.doi);
   const crossref = await getCrossrefStatus(doi).catch(() => null);
+  const publicationCountryCode =
+    work.primary_location?.source?.country_code ??
+    getPublisherLocationCountryCode(crossref?.publisherLocation ?? null);
 
   return {
     sourceProvider: "OpenAlex" as const,
@@ -1200,6 +1427,7 @@ async function normalizeOpenAlexWork(work: OpenAlexWork) {
     citationCount: work.cited_by_count ?? null,
     affiliations: getOpenAlexAffiliations(work),
     countryCodes: getOpenAlexCountryCodes(work),
+    publicationCountryCode,
     retractionStatus:
       crossref?.retractionStatus ??
       (work.is_retracted === true
@@ -1281,13 +1509,29 @@ export const getSearchResponse = cache(
     const cachedResponse = await readQueryCache(normalized);
 
     if (cachedResponse) {
+      let sources = cachedResponse.sources;
       const cachedWarnings = new Set(cachedResponse.warnings);
       let overallFindingsSummary = cachedResponse.overallFindingsSummary;
 
       try {
+        const localityEnhanced = await enhanceUnknownLocalityWithAi(sources);
+        sources = localityEnhanced.sources;
+
+        if (localityEnhanced.updatedCount > 0) {
+          cachedWarnings.add(
+            `AI locality review clarified ${localityEnhanced.updatedCount} source locality label(s).`,
+          );
+        }
+      } catch {
+        cachedWarnings.add(
+          "AI locality review was unavailable for this cache hit, so API-only locality checks were used.",
+        );
+      }
+
+      try {
         overallFindingsSummary = await generateOverallFindingsSummaryForQuery({
           query: rawQuery,
-          sources: cachedResponse.sources,
+          sources,
         });
       } catch {
         cachedWarnings.add(
@@ -1298,6 +1542,7 @@ export const getSearchResponse = cache(
       return {
         ...cachedResponse,
         query: rawQuery,
+        sources,
         overallFindingsSummary,
         fromCache: true,
         warnings: [...cachedWarnings],
@@ -1427,6 +1672,21 @@ export const getSearchResponse = cache(
 
       warnings.add(
         "AI source insights failed, so per-source Summary and Key finding were generated with abstract slicing fallback.",
+      );
+    }
+
+    try {
+      const localityEnhanced = await enhanceUnknownLocalityWithAi(sources);
+      sources = localityEnhanced.sources;
+
+      if (localityEnhanced.updatedCount > 0) {
+        warnings.add(
+          `AI locality review clarified ${localityEnhanced.updatedCount} source locality label(s).`,
+        );
+      }
+    } catch {
+      warnings.add(
+        "AI locality review was unavailable for this run, so API-only locality checks were used.",
       );
     }
 
