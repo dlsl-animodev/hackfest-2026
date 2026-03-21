@@ -31,11 +31,10 @@ export function SearchSessionShell({
   const [isRouting, startTransition] = useTransition();
   const turns = useSearchSessionStore((state) => state.turns);
   const pendingSearch = useSearchSessionStore((state) => state.pendingSearch);
-  const latestCompletedTurnId = useSearchSessionStore(
-    (state) => state.latestCompletedTurnId,
-  );
   const startSearch = useSearchSessionStore((state) => state.startSearch);
-  const setPendingStage = useSearchSessionStore((state) => state.setPendingStage);
+  const setPendingStage = useSearchSessionStore(
+    (state) => state.setPendingStage,
+  );
   const syncCompletedSearch = useSearchSessionStore(
     (state) => state.syncCompletedSearch,
   );
@@ -58,10 +57,8 @@ export function SearchSessionShell({
     const intervalId = window.setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
       const nextStage =
-        [...STAGE_TIMINGS]
-          .reverse()
-          .find((entry) => elapsedMs >= entry.afterMs)?.stageId ??
-        STAGE_TIMINGS[0].stageId;
+        [...STAGE_TIMINGS].reverse().find((entry) => elapsedMs >= entry.afterMs)
+          ?.stageId ?? STAGE_TIMINGS[0].stageId;
 
       setPendingStage(nextStage);
     }, 300);
@@ -87,7 +84,8 @@ export function SearchSessionShell({
   }, [lastTurn]);
 
   useEffect(() => {
-    if (!turns.length) {
+    // Keep the viewport pinned while loading, but stop auto-jumping once results are done.
+    if (!pendingSearch || !turns.length) {
       return;
     }
 
@@ -97,7 +95,7 @@ export function SearchSessionShell({
         block: "end",
       });
     });
-  }, [latestCompletedTurnId, scrollSignal, turns.length]);
+  }, [pendingSearch, scrollSignal, turns.length]);
 
   function handleSubmitQuery(rawQuery: string) {
     const trimmedQuery = rawQuery.trim();

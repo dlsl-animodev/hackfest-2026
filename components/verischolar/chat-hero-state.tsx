@@ -18,10 +18,10 @@ export function ChatHeroState() {
           <h1 className="type-display text-[clamp(1.85rem,4.4vw,3.15rem)] leading-[0.94] text-[var(--ink)]">
             What should we verify today?
           </h1>
-          <p className="mx-auto max-w-[42rem] text-[0.84rem] leading-[1.7] text-[color:rgba(82,67,56,0.86)] sm:text-[0.9rem]">
-            VeriScholar now behaves like a guided research conversation:
-            submit a question, follow the retrieval steps, then work directly
-            from a credibility-ranked source board.
+          <p className="mx-auto max-w-[42rem] text-[0.92rem] leading-[1.7] text-[color:rgba(82,67,56,0.86)] sm:text-[0.9rem]">
+            VeriScholar now behaves like a guided research conversation: submit
+            a question, follow the retrieval steps, then work directly from a
+            credibility-ranked source board.
           </p>
         </div>
       </div>
