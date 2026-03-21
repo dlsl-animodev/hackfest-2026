@@ -74,7 +74,7 @@ export function PromptComposer({
             onKeyDown={handleKeyDown}
             enterKeyHint="search"
             placeholder="Describe your research problem, target population, or what needs verification."
-            className={`w-full resize-none border-none bg-transparent pr-12 text-[0.94rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1rem] ${
+            className={`w-full resize-none border-none bg-transparent pr-12 text-[1.02rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.06rem] ${
               compact
                 ? "max-h-24 min-h-[2.85rem] leading-6"
                 : "max-h-24 min-h-[3.05rem] leading-6"
@@ -83,15 +83,15 @@ export function PromptComposer({
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--muted)]">
-              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.74)] px-3 py-1.5 text-[0.68rem] tracking-[0.14em] uppercase">
+              <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.74)] px-3 py-1.5 text-[0.76rem] tracking-[0.14em] uppercase">
                 {compact ? "Continue the thread" : "Ask a research question"}
               </span>
               {isPending ? (
-                <span className="rounded-full border border-[rgba(162,119,79,0.2)] bg-[rgba(255,245,232,0.82)] px-3 py-1.5 text-[0.7rem] text-[var(--accent)]">
+                <span className="rounded-full border border-[rgba(162,119,79,0.2)] bg-[rgba(255,245,232,0.82)] px-3 py-1.5 text-[0.78rem] text-[var(--accent)]">
                   Search in progress
                 </span>
               ) : (
-                <span className="text-[0.72rem] text-[color:rgba(120,102,85,0.84)]">
+                <span className="text-[0.8rem] text-[color:rgba(120,102,85,0.84)]">
                   Enter to send, Shift+Enter for newline
                 </span>
               )}
@@ -118,10 +118,7 @@ export function PromptComposer({
       </form>
 
       {!compact ? (
-        <SuggestionChips
-          compact={compact}
-          onSelectSuggestion={onSubmitQuery}
-        />
+        <SuggestionChips compact={compact} onSelectSuggestion={onSubmitQuery} />
       ) : null}
     </div>
   );

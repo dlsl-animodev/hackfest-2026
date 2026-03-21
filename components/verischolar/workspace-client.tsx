@@ -111,13 +111,13 @@ export function WorkspaceClient({
     >
       <div className="grid gap-4 rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-4 shadow-[0_20px_54px_rgba(108,82,54,0.07)] sm:px-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
         <div className="space-y-4">
-          <p className="text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
+          <p className="text-[0.84rem] tracking-[0.18em] text-[var(--muted)] uppercase">
             Query
           </p>
           <h2 className="type-display max-w-[20ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.9rem]">
             {query}
           </h2>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+          <div className="flex flex-wrap items-center gap-2 text-[0.84rem] text-[var(--muted)]">
             {expandedQuery && expandedQuery !== query ? (
               <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-3 py-1.5">
                 Expanded search: {expandedQuery}
@@ -133,7 +133,7 @@ export function WorkspaceClient({
               <p className="text-xs tracking-[0.14em] text-[var(--muted)] uppercase">
                 Overall findings summary
               </p>
-              <p className="mt-2 text-sm leading-6 text-[color:rgba(82,67,56,0.9)]">
+              <p className="mt-2 text-[1.02rem] leading-6 text-[color:rgba(82,67,56,0.9)]">
                 {overallFindingsSummary}
               </p>
             </div>
@@ -151,10 +151,12 @@ export function WorkspaceClient({
               key={stat.label}
               className="rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-4 py-3"
             >
-              <p className="text-xs tracking-[0.14em] text-[var(--muted)] uppercase">
+              <p className="text-[0.82rem] tracking-[0.14em] text-[var(--muted)] uppercase">
                 {stat.label}
               </p>
-              <p className="mt-2 text-sm text-[var(--ink)]">{stat.value}</p>
+              <p className="mt-2 text-[1.02rem] text-[var(--ink)]">
+                {stat.value}
+              </p>
             </div>
           ))}
         </div>
@@ -184,7 +186,7 @@ export function WorkspaceClient({
                 Compare evidence, then pin only what survives scrutiny.
               </h3>
             </div>
-            <p className="max-w-[34rem] text-sm leading-6 text-[color:rgba(82,67,56,0.84)]">
+            <p className="max-w-[34rem] text-[1.02rem] leading-6 text-[color:rgba(82,67,56,0.84)]">
               Results are ranked by credibility, citation momentum, venue
               quality, and recency so the strongest candidates surface faster.
             </p>
