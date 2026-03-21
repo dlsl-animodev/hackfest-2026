@@ -32,7 +32,9 @@ export function SearchSessionShell({
   const turns = useSearchSessionStore((state) => state.turns);
   const pendingSearch = useSearchSessionStore((state) => state.pendingSearch);
   const startSearch = useSearchSessionStore((state) => state.startSearch);
-  const setPendingStage = useSearchSessionStore((state) => state.setPendingStage);
+  const setPendingStage = useSearchSessionStore(
+    (state) => state.setPendingStage,
+  );
   const syncCompletedSearch = useSearchSessionStore(
     (state) => state.syncCompletedSearch,
   );
@@ -55,10 +57,8 @@ export function SearchSessionShell({
     const intervalId = window.setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
       const nextStage =
-        [...STAGE_TIMINGS]
-          .reverse()
-          .find((entry) => elapsedMs >= entry.afterMs)?.stageId ??
-        STAGE_TIMINGS[0].stageId;
+        [...STAGE_TIMINGS].reverse().find((entry) => elapsedMs >= entry.afterMs)
+          ?.stageId ?? STAGE_TIMINGS[0].stageId;
 
       setPendingStage(nextStage);
     }, 300);
