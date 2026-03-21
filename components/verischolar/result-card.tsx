@@ -37,34 +37,34 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
         <h3 className="type-display line-clamp-3 text-[1.22rem] leading-[1.28] text-[var(--ink)] sm:text-[1.3rem]">
           {source.title}
         </h3>
-        <p className="line-clamp-2 text-[0.98rem] leading-6 text-[var(--muted)]">
+        <p className="line-clamp-2 text-[1.03rem] leading-6 text-[var(--muted)]">
           {source.authors.join(", ") || "Unknown author"}
         </p>
-        <p className="line-clamp-2 text-sm leading-6 text-[var(--muted)]">
+        <p className="line-clamp-2 text-[1.02rem] leading-6 text-[var(--muted)]">
           {venueLine || "Venue metadata incomplete"}
         </p>
         <div className="grid gap-3">
           {source.summary ? (
             <div className="rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.72)] p-3">
-              <p className="text-[0.68rem] tracking-[0.16em] text-[var(--muted)] uppercase">
+              <p className="text-[0.76rem] tracking-[0.16em] text-[var(--muted)] uppercase">
                 Summary
               </p>
-              <p className="mt-2 line-clamp-4 text-sm leading-6 text-[color:rgba(53,41,32,0.92)]">
+              <p className="mt-2 line-clamp-4 text-[1.02rem] leading-6 text-[color:rgba(53,41,32,0.92)]">
                 {source.summary}
               </p>
             </div>
           ) : (
-            <p className="line-clamp-4 text-sm leading-6 text-[color:rgba(71,58,47,0.88)]">
+            <p className="line-clamp-4 text-[1.02rem] leading-6 text-[color:rgba(71,58,47,0.88)]">
               {source.abstract ?? "Abstract unavailable from live metadata."}
             </p>
           )}
 
           {source.keyFinding ? (
             <div className="rounded-[1.05rem] border border-[rgba(182,131,67,0.28)] bg-[rgba(255,245,229,0.72)] p-3">
-              <p className="text-[0.68rem] tracking-[0.16em] text-[color:rgba(117,76,36,0.9)] uppercase">
+              <p className="text-[0.76rem] tracking-[0.16em] text-[color:rgba(117,76,36,0.9)] uppercase">
                 Key finding
               </p>
-              <p className="mt-2 line-clamp-4 text-sm leading-6 text-[color:rgba(62,45,31,0.95)]">
+              <p className="mt-2 line-clamp-4 text-[1.02rem] leading-6 text-[color:rgba(62,45,31,0.95)]">
                 {source.keyFinding}
               </p>
             </div>
@@ -72,7 +72,7 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-[0.78rem] text-[var(--muted)]">
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-[0.86rem] text-[var(--muted)]">
         <span className="rounded-full border border-[var(--line)] px-3 py-2">
           {source.citationCount !== null
             ? `${source.citationCount} citations`
@@ -99,18 +99,18 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
       </div>
 
       <div className="mt-4 rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.74)] p-3">
-        <p className="text-[0.68rem] tracking-[0.16em] text-[var(--muted)] uppercase">
+        <p className="text-[0.76rem] tracking-[0.16em] text-[var(--muted)] uppercase">
           Credibility signal
         </p>
-        <p className="mt-2 line-clamp-2 text-sm leading-6 text-[color:rgba(68,54,42,0.9)]">
+        <p className="mt-2 line-clamp-2 text-[1.02rem] leading-6 text-[color:rgba(68,54,42,0.9)]">
           <ShieldIcon className="mr-2 inline h-4 w-4 text-[var(--accent)]" />
           {source.credibility.explanations[0]}
         </p>
       </div>
 
       {source.credibility.methodologyNote ? (
-        <div className="mt-4 rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.82)] p-3 text-sm leading-6 text-[color:rgba(68,54,42,0.9)]">
-          <p className="text-[0.68rem] tracking-[0.14em] text-[var(--muted)] uppercase">
+        <div className="mt-4 rounded-[1.05rem] border border-[var(--line)] bg-[rgba(255,252,245,0.82)] p-3 text-[1.02rem] leading-6 text-[color:rgba(68,54,42,0.9)]">
+          <p className="text-[0.76rem] tracking-[0.14em] text-[var(--muted)] uppercase">
             Methodology note
           </p>
           <p className="mt-2 line-clamp-3">{source.credibility.methodologyNote}</p>
