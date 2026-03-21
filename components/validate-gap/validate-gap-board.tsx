@@ -230,7 +230,9 @@ export default function ValidateGapBoard({
                     </h1>
                     <Badge>Iteration {iteration.id}</Badge>
                   </div>
-                  <p className={`${embedded ? "mt-3 text-base leading-7" : "mt-2 text-sm"} text-gray-600`}>
+                  <p
+                    className={`${embedded ? "mt-3 text-base leading-7" : "mt-2 text-sm"} text-gray-600`}
+                  >
                     Targeting <strong>{iteration.queries.length}</strong>{" "}
                     queries to check if these gaps are unaddressed in the
                     literature.

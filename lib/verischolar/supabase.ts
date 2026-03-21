@@ -289,6 +289,43 @@ export async function readWorkplaceSession(
   return parsed.success ? parsed.data : null;
 }
 
+export async function listWorkplaceSessions(
+  limit = 20,
+): Promise<WorkplaceSession[]> {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("workplace_sessions")
+    .select(
+      "session_id, query, selected_source_ids, analysis_payload, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data
+    .map((entry) =>
+      workplaceSessionSchema.safeParse({
+        sessionId: entry.session_id,
+        query: entry.query,
+        selectedSourceIds: Array.isArray(entry.selected_source_ids)
+          ? entry.selected_source_ids
+          : [],
+        analysis: entry.analysis_payload,
+        createdAt: entry.created_at,
+      }),
+    )
+    .filter((parsed) => parsed.success)
+    .map((parsed) => parsed.data);
+}
+
 export function validateCachedSource(value: unknown) {
   const parsed = researchSourceSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
