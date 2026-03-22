@@ -93,12 +93,12 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
           </span>
         ) : null}
         {source.predatoryStatus === "Predatory" ? (
-          <span className="rounded-full border border-[rgba(122,45,45,0.2)] bg-[rgba(153,63,63,0.1)] px-3 py-2 text-[var(--danger)]">
+          <span className="rounded-full border border-[var(--danger)] bg-[rgba(153,63,63,0.1)] px-3 py-2 text-[var(--danger)]">
             Predatory risk
           </span>
         ) : null}
         {source.missingFields.length > 0 ? (
-          <span className="rounded-full border border-[rgba(182,131,67,0.25)] bg-[rgba(191,150,88,0.12)] px-3 py-2 text-[var(--warning)]">
+          <span className="rounded-full border border-[var(--warning)] bg-[rgba(191,150,88,0.12)] px-3 py-2 text-[var(--warning)]">
             Missing {source.missingFields.join(", ")}
           </span>
         ) : null}
@@ -131,8 +131,8 @@ export function ResultCard({ source, selected, onToggle }: ResultCardProps) {
           onClick={() => onToggle(source.id)}
           className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm transition-all duration-300 ${
             selected
-              ? "bg-[var(--ink)] text-[var(--bg)] shadow-[0_18px_40px_rgba(37,23,12,0.14)]"
-              : "border border-[var(--line)] bg-[rgba(255,252,245,0.86)] text-[var(--ink)]"
+              ? "bg-[var(--ink)] text-[var(--bg)]"
+              : "border border-[var(--line)] bg-[rgba(255,252,245,0.86)] text-[var(--ink)] hover:bg-[var(--accent2)]"
           }`}
         >
           <PinIcon className="h-4 w-4" />

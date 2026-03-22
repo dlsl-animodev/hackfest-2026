@@ -198,12 +198,14 @@ export function SearchSessionShell({
 
   return (
     <section
-      className={`mx-auto flex w-full flex-1 flex-col px-4 pt-3 sm:px-6 lg:px-10 ${
+      className={`mx-auto flex w-full flex-1 flex-col px-4 pt-3 sm:px-6 lg:px-10 
+        ${
         hasConversation ? "lg:pr-[27rem] pb-32" : "pb-6"
       }`}
     >
       <div
-        className={`mx-auto flex w-full flex-1 flex-col ${
+        className={`mx-auto flex w-full flex-1 flex-col 
+          ${
           hasConversation ? "max-w-[1000px]" : "max-w-[1120px]"
         }`}
       >
@@ -236,22 +238,14 @@ export function SearchSessionShell({
         )}
       </div>
 
+      {/*Sidebar*/}
       {hasConversation ? (
-        <aside className="ui-enter-right fixed bottom-0 right-0 top-[var(--topbar-height)] z-30 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block rounded-4xl">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <ResearchBoard
-                selectedSources={selectedSources}
-                localRatio={metrics.ratioLocal}
-                citationExport={citationExport}
-                onToggle={toggleSource}
-                onCopyCitations={copyCitations}
-                copied={copied}
-              />
-            </div>
-
-            <div className="space-y-2 pb-2">
-              <p className="px-1 text-[0.68rem] tracking-[0.2em] text-[var(--muted)] uppercase">
+        <aside className="ui-enter-right fixed bottom-0 right-5 top-21 z-30 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block rounded-4xl
+        scrollbar-thin scrollbar-thumb-[var(--muted)] scrollbar-track-transparenthover:scrollbar-thumb-[var(--muted)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--muted)]">
+          <div className="space-y-2">
+            
+            <div className=" pb-2">
+              <p className="px-1 py-2 text-[1rem] tracking-[0.2em] text-[var(--muted)] uppercase">
                 Analysis
               </p>
               <AnalysisPanel
@@ -264,6 +258,18 @@ export function SearchSessionShell({
                 metrics={metrics}
               />
             </div>
+
+            <div className="space-y-2">
+              <ResearchBoard
+                selectedSources={selectedSources}
+                localRatio={metrics.ratioLocal}
+                citationExport={citationExport}
+                onToggle={toggleSource}
+                onCopyCitations={copyCitations}
+                copied={copied}
+              />
+            </div>
+
           </div>
         </aside>
       ) : null}

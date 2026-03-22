@@ -10,7 +10,6 @@ import {
 
 import { ArrowUpIcon } from "@/components/verischolar/icons";
 import { SuggestionChips } from "@/components/verischolar/suggestion-chips";
-import { ArrowRightIcon } from "lucide-react";
 
 type PromptComposerProps = {
   initialQuery?: string;
@@ -75,7 +74,9 @@ export function PromptComposer({
             onKeyDown={handleKeyDown}
             enterKeyHint="search"
             placeholder="Describe your research problem, target population, or what needs verification."
-            className={`w-full resize-none border-none bg-transparent pr-12 text-[1.02rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.06rem] ${
+            className={`w-full resize-none border-none bg-transparent pr-12 text-[1.02rem] text-[var(--ink)] outline-none placeholder:text-[color:rgba(94,82,69,0.5)] sm:text-[1.06rem] 
+              scrollbar-thin scrollbar-thumb-[var(--muted)] scrollbar-track-transparenthover:scrollbar-thumb-[var(--muted)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--muted)]
+              ${
               compact
                 ? "max-h-24 min-h-[2.85rem] leading-6"
                 : "max-h-24 min-h-[3.05rem] leading-6"
