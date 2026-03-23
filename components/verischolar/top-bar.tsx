@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { BrandGlyph } from "@/components/verischolar/icons";
+import { useAnalysisStateStore } from "@/store/useAnalysisStateStore";
+import { useResearchBoardStore } from "@/store/useResearchBoardStore";
 import { useSearchSessionStore } from "@/store/useSearchSessionStore";
 
 type TopBarProps = {
@@ -10,8 +13,21 @@ type TopBarProps = {
 };
 
 export function TopBar({ compact = false }: TopBarProps) {
+  const router = useRouter();
   const pendingSearch = useSearchSessionStore((state) => state.pendingSearch);
+  const resetSession = useSearchSessionStore((state) => state.resetSession);
+  const resetBoard = useResearchBoardStore((state) => state.resetBoard);
+  const clearAnalysisState = useAnalysisStateStore(
+    (state) => state.clearAnalysisState,
+  );
   const isCompact = compact || Boolean(pendingSearch);
+
+  function handleGoHome() {
+    resetSession();
+    resetBoard();
+    clearAnalysisState();
+    router.push("/");
+  }
 
   return (
     <header
@@ -22,12 +38,13 @@ export function TopBar({ compact = false }: TopBarProps) {
       <div
         className={`flex items-center rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] shadow-[var(--shadow-soft)] backdrop-blur-xl ${
           isCompact
-            ? "mr-auto w-fit px-2.5 py-1.5"
+            ? "mx-auto w-full max-w-[1120px] justify-between px-2.5 py-1.5 sm:px-3"
             : "mx-auto max-w-[1120px] justify-between px-4 py-2.5 sm:px-5"
         }`}
       >
         <Link
           href="/"
+          onClick={handleGoHome}
           className={`group inline-flex items-center text-[var(--ink)] uppercase ${
             isCompact
               ? "gap-0"
@@ -48,6 +65,17 @@ export function TopBar({ compact = false }: TopBarProps) {
               veriScholar
             </span>
           )}
+        </Link>
+
+        <Link
+          href="/workplace"
+          className={`inline-flex items-center rounded-full border border-[var(--line)] bg-[rgba(255,255,255,0.72)] text-[var(--ink)] transition-colors duration-200 hover:bg-[rgba(255,255,255,0.94)] ${
+            isCompact
+              ? "px-3 py-1.5 text-xs tracking-[0.12em] uppercase"
+              : "px-4 py-2 text-sm"
+          }`}
+        >
+          Workplace
         </Link>
 
         {/* <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">

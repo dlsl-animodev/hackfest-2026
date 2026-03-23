@@ -3,10 +3,12 @@ import { Suspense } from "react";
 import { SearchSessionShell } from "@/components/verischolar/search-session-shell";
 import { TopBar } from "@/components/verischolar/top-bar";
 import { getSearchResponse } from "@/lib/verischolar/data";
+import type { SearchMode } from "@/lib/verischolar/types";
 
 type PageProps = {
   searchParams: Promise<{
     q?: string | string[];
+    local?: string | string[];
   }>;
 };
 
@@ -16,6 +18,14 @@ function getQueryValue(rawValue?: string | string[]) {
   }
 
   return rawValue?.trim() ?? "";
+}
+
+function getSearchMode(rawValue?: string | string[]): SearchMode {
+  const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+
+  return value === "1" || value === "true" || value === "local"
+    ? "local"
+    : "all";
 }
 
 function WorkspaceSkeleton() {
@@ -38,9 +48,16 @@ function WorkspaceSkeleton() {
 async function SearchExperience({ searchParams }: PageProps) {
   const params = await searchParams;
   const query = getQueryValue(params.q);
-  const searchResponse = query ? await getSearchResponse(query) : null;
+  const searchMode = getSearchMode(params.local);
+  const searchResponse = query ? await getSearchResponse(query, searchMode) : null;
 
-  return <SearchSessionShell query={query} searchResponse={searchResponse} />;
+  return (
+    <SearchSessionShell
+      query={query}
+      searchMode={searchMode}
+      searchResponse={searchResponse}
+    />
+  );
 }
 
 export default function Page(props: PageProps) {

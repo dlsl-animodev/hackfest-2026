@@ -19,6 +19,7 @@ type SearchSessionStore = {
   turns: SearchConversationTurn[];
   pendingSearch: PendingSearchMetadata | null;
   latestCompletedTurnId: string | null;
+  resetSession: () => void;
   startSearch: (rawQuery: string) => string | null;
   setPendingStage: (stageId: SearchActivityStageId) => void;
   syncCompletedSearch: (response: SearchResponse) => void;
@@ -98,6 +99,13 @@ export const useSearchSessionStore = create<SearchSessionStore>((set) => ({
   turns: [],
   pendingSearch: null,
   latestCompletedTurnId: null,
+  resetSession: () => {
+    set({
+      turns: [],
+      pendingSearch: null,
+      latestCompletedTurnId: null,
+    });
+  },
   startSearch: (rawQuery) => {
     const query = rawQuery.trim();
 

@@ -7,18 +7,24 @@ import {
   analysisResultSchema,
   researchSourceSchema,
   searchResponseSchema,
+  workplaceSessionSchema,
 } from "@/lib/verischolar/schemas";
 import type {
   AnalysisResult,
   ResearchSource,
+  SearchMode,
   SearchResponse,
+  WorkplaceSession,
 } from "@/lib/verischolar/types";
 
 let cachedClient: SupabaseClient | null | undefined;
-const QUERY_CACHE_VERSION = "v3";
+const QUERY_CACHE_VERSION = "v6";
 
-function getVersionedQueryKey(normalizedQuery: string) {
-  return `${QUERY_CACHE_VERSION}:${normalizedQuery}`;
+function getVersionedQueryKey(
+  normalizedQuery: string,
+  searchMode: SearchMode = "all",
+) {
+  return `${QUERY_CACHE_VERSION}:${searchMode}:${normalizedQuery}`;
 }
 
 function getSupabaseAdminClient() {
@@ -47,7 +53,10 @@ function getIsoNow() {
   return new Date().toISOString();
 }
 
-export async function readQueryCache(normalizedQuery: string) {
+export async function readQueryCache(
+  normalizedQuery: string,
+  searchMode: SearchMode = "all",
+) {
   const supabase = getSupabaseAdminClient();
 
   if (!supabase) {
@@ -57,17 +66,47 @@ export async function readQueryCache(normalizedQuery: string) {
   const { data, error } = await supabase
     .from("query_cache")
     .select("query, expanded_query, payload, warnings")
-    .eq("normalized_query", getVersionedQueryKey(normalizedQuery))
+    .eq("normalized_query", getVersionedQueryKey(normalizedQuery, searchMode))
     .maybeSingle();
 
   if (error || !data) {
     return null;
   }
 
+  const payload =
+    typeof data.payload === "object" && data.payload ? data.payload : null;
+  const sources =
+    Array.isArray(data.payload)
+      ? data.payload
+      : payload &&
+          "sources" in payload &&
+          Array.isArray((payload as { sources?: unknown }).sources)
+        ? (payload as { sources: unknown[] }).sources
+        : [];
+  const overallFindingsSummary =
+    payload &&
+    "overallFindingsSummary" in payload &&
+    (typeof (payload as { overallFindingsSummary?: unknown })
+      .overallFindingsSummary === "string" ||
+      (payload as { overallFindingsSummary?: unknown }).overallFindingsSummary ===
+        null)
+      ? ((payload as { overallFindingsSummary: string | null })
+          .overallFindingsSummary ?? null)
+      : null;
+  const cachedSearchMode =
+    payload &&
+    "searchMode" in payload &&
+    ((payload as { searchMode?: unknown }).searchMode === "all" ||
+      (payload as { searchMode?: unknown }).searchMode === "local")
+      ? ((payload as { searchMode: SearchMode }).searchMode ?? searchMode)
+      : searchMode;
+
   const parsed = searchResponseSchema.safeParse({
     query: data.query,
+    searchMode: cachedSearchMode,
     expandedQuery: data.expanded_query,
-    sources: data.payload,
+    overallFindingsSummary,
+    sources,
     fromCache: true,
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
   });
@@ -86,10 +125,15 @@ export async function writeQueryCache(response: SearchResponse) {
     {
       normalized_query: getVersionedQueryKey(
         response.query.trim().toLowerCase(),
+        response.searchMode,
       ),
       query: response.query,
       expanded_query: response.expandedQuery,
-      payload: response.sources,
+      payload: {
+        searchMode: response.searchMode,
+        sources: response.sources,
+        overallFindingsSummary: response.overallFindingsSummary,
+      },
       warnings: response.warnings,
       updated_at: getIsoNow(),
     },
@@ -224,6 +268,112 @@ export async function writeAnalysisCache({
       onConflict: "selection_hash",
     },
   );
+}
+
+export async function writeWorkplaceSession({
+  sessionId,
+  query,
+  selectedSourceIds,
+  analysis,
+}: {
+  sessionId: string;
+  query: string;
+  selectedSourceIds: string[];
+  analysis: AnalysisResult;
+}) {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    throw new Error(
+      "Workplace storage is not configured. Add Supabase server credentials before creating shared sessions.",
+    );
+  }
+
+  const { error } = await supabase.from("workplace_sessions").insert({
+    session_id: sessionId,
+    query,
+    selected_source_ids: selectedSourceIds,
+    analysis_payload: analysis,
+    created_at: getIsoNow(),
+    updated_at: getIsoNow(),
+  });
+
+  if (error) {
+    throw new Error(
+      "Workplace session could not be saved right now. Review the synthesis in-place or retry once storage is available.",
+    );
+  }
+}
+
+export async function readWorkplaceSession(
+  sessionId: string,
+): Promise<WorkplaceSession | null> {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("workplace_sessions")
+    .select(
+      "session_id, query, selected_source_ids, analysis_payload, created_at",
+    )
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  const parsed = workplaceSessionSchema.safeParse({
+    sessionId: data.session_id,
+    query: data.query,
+    selectedSourceIds: Array.isArray(data.selected_source_ids)
+      ? data.selected_source_ids
+      : [],
+    analysis: data.analysis_payload,
+    createdAt: data.created_at,
+  });
+
+  return parsed.success ? parsed.data : null;
+}
+
+export async function listWorkplaceSessions(
+  limit = 20,
+): Promise<WorkplaceSession[]> {
+  const supabase = getSupabaseAdminClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("workplace_sessions")
+    .select(
+      "session_id, query, selected_source_ids, analysis_payload, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data
+    .map((entry) =>
+      workplaceSessionSchema.safeParse({
+        sessionId: entry.session_id,
+        query: entry.query,
+        selectedSourceIds: Array.isArray(entry.selected_source_ids)
+          ? entry.selected_source_ids
+          : [],
+        analysis: entry.analysis_payload,
+        createdAt: entry.created_at,
+      }),
+    )
+    .filter((parsed) => parsed.success)
+    .map((parsed) => parsed.data);
 }
 
 export function validateCachedSource(value: unknown) {

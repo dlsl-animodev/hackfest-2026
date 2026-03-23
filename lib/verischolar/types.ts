@@ -27,6 +27,8 @@ export type JournalQuality =
   | "Predatory risk match"
   | "Unknown";
 
+export type SearchMode = "all" | "local";
+
 export type ScoreInputEffect = "positive" | "negative" | "neutral";
 
 export type ScoreInput = {
@@ -122,8 +124,17 @@ export type AnalysisResult = {
   generatedFromSourceIds: string[];
 };
 
+export type WorkplaceSession = {
+  sessionId: string;
+  query: string;
+  selectedSourceIds: string[];
+  analysis: AnalysisResult;
+  createdAt: string;
+};
+
 export type SearchResponse = {
   query: string;
+  searchMode: SearchMode;
   expandedQuery: string | null;
   overallFindingsSummary: string | null;
   sources: ResearchSource[];

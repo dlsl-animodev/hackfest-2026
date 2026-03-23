@@ -52,36 +52,20 @@ export function WorkspaceClient({
       ? "No results yet"
       : `${sources.length} ranked sources`;
   const workspaceMotion = getWorkspaceRevealMotion(Boolean(reduceMotion));
+  const isLocalOnly = searchResponse.searchMode === "local";
 
-  const PHILIPPINE_FOCUS_CLAUSE =
-    '(Philippines OR Philippine OR "Metro Manila" OR Luzon OR Visayas OR Mindanao OR ".edu.ph" OR ".gov.ph" OR "University of the Philippines" OR Ateneo OR "De La Salle" OR UST)';
-
-  function buildPhilippineOnlyQuery(baseQuery: string) {
-    const trimmed = baseQuery.trim();
-
-    if (!trimmed) {
-      return `("public health" OR "economics" OR "education" OR "agriculture") AND ${PHILIPPINE_FOCUS_CLAUSE} AND ("peer reviewed" OR journal)`;
-    }
-
-    const sanitized = trimmed
-      .replace(/\s+AND\s*\(.+?\.edu\.ph.+?\.gov\.ph.+?\)$/i, "")
-      .trim();
-
-    return `${sanitized} AND ${PHILIPPINE_FOCUS_CLAUSE} AND ("local study" OR "Philippine context" OR "country: Philippines")`;
-  }
-
-  function handleFindPhilippineOnly() {
-    const nextQuery = buildPhilippineOnlyQuery(query);
-    const href = `${pathname}?q=${encodeURIComponent(nextQuery)}`;
-    const searchId = startSearch(nextQuery);
+  function handleToggleLocalMode() {
+    const href = `${pathname}?q=${encodeURIComponent(query)}${
+      isLocalOnly ? "" : "&local=1"
+    }`;
+    const searchId = startSearch(query);
 
     if (!searchId) {
       return;
     }
 
-    if (nextQuery === query.trim()) {
+    if (isLocalOnly) {
       router.replace(href, { scroll: false });
-      router.refresh();
       return;
     }
 
@@ -106,6 +90,11 @@ export function WorkspaceClient({
             {expandedQuery && expandedQuery !== query ? (
               <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-5 py-3">
                 Expanded search: {expandedQuery}
+              </span>
+            ) : null}
+            {isLocalOnly ? (
+              <span className="rounded-full border border-[rgba(95,132,88,0.22)] bg-[rgba(238,247,234,0.92)] px-3 py-1.5 text-[color:rgba(61,100,54,0.92)]">
+                Local-only board
               </span>
             ) : null}
             <span className="rounded-full border border-[var(--line)] px-3 py-1.5">
@@ -175,14 +164,14 @@ export function WorkspaceClient({
             and recency so the strongest candidates surface faster.
           </p>
 
-          <button
-            type="button"
-            onClick={handleFindPhilippineOnly}
-            className="flex items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-sm text-[var(--panel)] transition-colors duration-200 hover:border[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
-          >
-            <Search className="w-4 h-4" />
-            Find local papers
-          </button>
+     <button
+  type="button"
+  onClick={handleToggleLocalMode}
+  className="flex items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-sm text-[var(--panel)] transition-colors duration-200 hover:border-[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
+>
+  <Search className="h-4 w-4" />
+  {isLocalOnly ? "Show All Results" : "Find local papers"}
+</button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

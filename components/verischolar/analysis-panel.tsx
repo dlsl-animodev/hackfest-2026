@@ -4,10 +4,11 @@ import { CitationHealthRail } from "@/components/verischolar/citation-health-rai
 import { SparkIcon } from "@/components/verischolar/icons";
 import { Sparkle } from 'lucide-react';
 import type { AnalysisActionState } from "@/lib/verischolar/action-state";
-import type { DashboardMetrics } from "@/lib/verischolar/types";
+import type { DashboardMetrics, SearchMode } from "@/lib/verischolar/types";
 
 type AnalysisPanelProps = {
   query: string;
+  searchMode: SearchMode;
   selectedSourceIds: string[];
   action: (payload: FormData) => void;
   actionState: AnalysisActionState;
@@ -18,6 +19,7 @@ type AnalysisPanelProps = {
 
 export function AnalysisPanel({
   query,
+  searchMode,
   selectedSourceIds,
   action,
   actionState,
@@ -48,6 +50,7 @@ export function AnalysisPanel({
 
         <form action={action} className="mt-4">
           <input type="hidden" name="query" value={query} />
+          <input type="hidden" name="searchMode" value={searchMode} />
           {selectedSourceIds.map((sourceId) => (
             <input
               key={sourceId}
@@ -64,7 +67,7 @@ export function AnalysisPanel({
           >
             <Sparkle className="h-4 w-4" />
             {isPending
-              ? "Synthesizing board..."
+              ? "Creating workplace session..."
               : "Run contradiction-aware synthesis"}
           </button>
         </form>
@@ -86,7 +89,7 @@ export function AnalysisPanel({
             <div className="rounded-[1.4rem] border border-[var(--line)] bg-[rgba(255,251,243,0.86)] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-xs tracking-[0.16em] text-[var(--muted)] uppercase">
-                  Synthesis
+                  Latest synthesis
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full border border-[var(--line)] px-3 py-1.5 text-xs text-[var(--muted)]">
@@ -100,76 +103,46 @@ export function AnalysisPanel({
               <p className="mt-3 text-sm leading-7 text-[color:rgba(61,47,34,0.92)]">
                 {actionState.analysis.synthesis}
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[var(--muted)]">
+                <span className="rounded-full border border-[var(--line)] px-3 py-1.5">
+                  {actionState.analysis.conflicts.length} conflicts
+                </span>
+                <span className="rounded-full border border-[var(--line)] px-3 py-1.5">
+                  {actionState.analysis.researchGaps.length} gaps
+                </span>
+                <span className="rounded-full border border-[var(--line)] px-3 py-1.5">
+                  {actionState.analysis.confidenceNotes.length} confidence notes
+                </span>
+              </div>
               <p className="mt-3 text-xs text-[var(--muted)]">
                 Generated{" "}
                 {new Date(actionState.analysis.generatedAt).toLocaleString()}
               </p>
             </div>
 
-            <div className="rounded-[1.4rem] border border-[var(--line)] bg-[rgba(255,255,255,0.68)] p-4">
-              <p className="text-xs tracking-[0.16em] text-[var(--muted)] uppercase">
-                Conflicts
-              </p>
-              <div className="mt-3 space-y-3">
-                {actionState.analysis.conflicts.length > 0 ? (
-                  actionState.analysis.conflicts.map((conflict) => (
-                    <div
-                      key={conflict.claim}
-                      className="rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,252,245,0.86)] p-3"
-                    >
-                      <p className="text-sm leading-7 text-[var(--ink)]">
-                        {conflict.claim}
-                      </p>
-                      <p className="mt-2 text-xs text-[var(--muted)]">
-                        Supporting:{" "}
-                        {conflict.supportingSourceIds.join(", ") || "None"}
-                      </p>
-                      <p className="mt-1 text-xs text-[var(--muted)]">
-                        Opposing:{" "}
-                        {conflict.opposingSourceIds.join(", ") || "None"}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm leading-7 text-[var(--muted)]">
-                    No sharp contradictions were detected yet. Add more varied
-                    sources to stress-test the claim landscape.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="rounded-[1.4rem] border border-[var(--line)] bg-[rgba(255,255,255,0.68)] p-4">
-                <p className="text-xs tracking-[0.16em] text-[var(--muted)] uppercase">
-                  Research gaps
+            <div className="flex flex-wrap items-center gap-2">
+              {actionState.workplaceSessionId ? (
+                <>
+                  <Link
+                    href={`/workplace/${encodeURIComponent(actionState.workplaceSessionId)}`}
+                    className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5"
+                  >
+                    <SparkIcon className="h-4 w-4" />
+                    Open Workplace session
+                  </Link>
+                  <Link
+                    href={`/validate-gap?sessionId=${encodeURIComponent(actionState.workplaceSessionId)}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.86)] px-4 py-3 text-sm text-[var(--ink)]"
+                  >
+                    Validate gap
+                  </Link>
+                </>
+              ) : (
+                <p className="text-sm text-[var(--muted)]">
+                  Gap validation opens once the Workplace session is saved.
                 </p>
-                <ul className="mt-3 space-y-2 text-sm leading-7 text-[color:rgba(61,47,34,0.92)]">
-                  {actionState.analysis.researchGaps.map((gap) => (
-                    <li key={gap}>- {gap}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-[1.4rem] border border-[var(--line)] bg-[rgba(255,255,255,0.68)] p-4">
-                <p className="text-xs tracking-[0.16em] text-[var(--muted)] uppercase">
-                  Confidence notes
-                </p>
-                <ul className="mt-3 space-y-2 text-sm leading-7 text-[color:rgba(61,47,34,0.92)]">
-                  {actionState.analysis.confidenceNotes.map((note) => (
-                    <li key={note}>- {note}</li>
-                  ))}
-                </ul>
-              </div>
+              )}
             </div>
-
-            <Link
-              href="/validate-gap"
-              className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5"
-            >
-              <SparkIcon className="h-4 w-4" />
-              Validate gap with other sources
-            </Link>
           </div>
         ) : (
           <div className="mt-5 rounded-[1.4rem] border border-dashed border-[var(--line-strong)] bg-[rgba(255,251,243,0.68)] p-4 text-sm leading-7 text-[var(--muted)]">
