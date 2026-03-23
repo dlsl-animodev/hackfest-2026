@@ -87,8 +87,8 @@ export function PromptComposer({
               scrollbar-thin scrollbar-thumb-[var(--muted)] scrollbar-track-transparenthover:scrollbar-thumb-[var(--muted)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--muted)]
               ${
               compact
-                ? "max-h-24 min-h-[2.85rem] leading-6"
-                : "max-h-24 min-h-[3.05rem] leading-6"
+                ? "max-h-24 min-h-[1.85rem] leading-6"
+                : "max-h-24 min-h-[2.05rem] leading-6"
             }`}
           />
 
@@ -111,7 +111,7 @@ export function PromptComposer({
             <button
               type="submit"
               disabled={!query.trim() || isPending}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-[0_14px_34px_rgba(32,20,12,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--ink)] text-[var(--bg)] shadow-[0_14px_34px_rgba(32,20,12,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:opacity-50"
               aria-label={
                 isPending
                   ? "Research search is in progress"

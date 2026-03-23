@@ -230,8 +230,8 @@ export function SearchSessionShell({
         }`}
       >
         {hasConversation ? (
-          <div className="flex-1">
-            <div className="rounded-[2rem] border border-[var(--line)] bg-[rgba(255,251,243,0.52)] p-3 shadow-[0_28px_74px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-4">
+          <div className="flex-1 mt-21">
+            <div className="overflow-y-auto rounded-[2rem] border border-[var(--line)] bg-[rgba(255,251,243,0.52)] p-3 shadow-[0_28px_74px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-4">
               <ChatMessageTimeline
                 turns={turns}
                 pendingSearch={pendingSearch}
@@ -242,17 +242,19 @@ export function SearchSessionShell({
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-[1120px] flex-col justify-end gap-4">
-            <div className="flex flex-1 items-center justify-center pb-2">
-              <ChatHeroState />
-            </div>
-            <div className="rounded-[1.75rem] border border-[rgba(118,96,72,0.14)] bg-[rgba(255,250,244,0.66)] p-3 shadow-[0_20px_52px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-3.5">
-              <PromptComposer
-                initialQuery={composerQuery}
-                compact={false}
-                isPending={isComposerPending}
-                onSubmitQuery={handleSubmitQuery}
-              />
+          <div className="mt-25 mx-auto flex min-h-[calc(100dvh-7.5rem)] w-full max-w-[1120px] flex-col items-center gap-4">
+            <div className="flex flex-col gap-15">
+              <div className="mt-21 flex flex-1 items-center justify-center pb-2">
+                <ChatHeroState />
+              </div>
+              <div className="rounded-[1.75rem] border border-[rgba(118,96,72,0.14)] bg-[rgba(255,250,244,0.66)] p-3 shadow-[0_20px_52px_rgba(91,64,35,0.08)] backdrop-blur-xl sm:p-3.5">
+                <PromptComposer
+                  initialQuery={composerQuery}
+                  compact={false}
+                  isPending={isComposerPending}
+                  onSubmitQuery={handleSubmitQuery}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -260,7 +262,7 @@ export function SearchSessionShell({
 
       {/*Sidebar*/}
       {hasConversation ? (
-        <aside className="ui-enter-right fixed bottom-0 right-5 top-21 z-30 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block rounded-4xl
+        <aside className="ui-enter-right fixed bottom-0 right-5 top-25 z-30 hidden w-[27rem] overflow-y-auto border-l border-[var(--line)] bg-[linear-gradient(180deg,rgba(252,248,242,0.97),rgba(247,240,230,0.94))] px-3 py-3 shadow-[-14px_0_36px_rgba(53,33,19,0.06)] backdrop-blur-xl lg:block rounded-4xl
         scrollbar-thin scrollbar-thumb-[var(--muted)] scrollbar-track-transparenthover:scrollbar-thumb-[var(--muted)] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--muted)]">
           <div className="space-y-2">
             

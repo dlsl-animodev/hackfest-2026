@@ -31,10 +31,9 @@ export function TopBar({ compact = false }: TopBarProps) {
 
   return (
     <header
-      className={`sticky top-0 z-30 px-4 sm:px-6 lg:px-10 ${
-        isCompact ? "pt-2" : "pt-3"
-      }`}
-    >
+      className="fixed z-30 w-full h-25 p-0 m-0"
+      style={{ background: 'var(--bg)' }}> 
+      <div className="fixed top-5 z-30 px-4 sm:px-6 lg:px-10 w-full">
       <div
         className={`flex items-center rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,252,245,0.84)] shadow-[var(--shadow-soft)] backdrop-blur-xl ${
           isCompact
@@ -56,9 +55,7 @@ export function TopBar({ compact = false }: TopBarProps) {
               isCompact ? "h-8 w-8" : "h-9 w-9"
             }`}
           >
-            <BrandGlyph
-              className={isCompact ? "h-4 w-4" : "h-[1.125rem] w-[1.125rem]"}
-            />
+            <img src="/logo.svg" alt="veriScholar" className={isCompact ? "h-4 w-4" : "h-[1.125rem] w-[1.125rem]"}/>
           </span>
           {isCompact ? null : (
             <span className="type-display text-[1rem] tracking-[0.1em] normal-case sm:text-[1.06rem]">
@@ -89,6 +86,7 @@ export function TopBar({ compact = false }: TopBarProps) {
             </Link>
           ))}
         </nav> */}
+      </div>
       </div>
     </header>
   );

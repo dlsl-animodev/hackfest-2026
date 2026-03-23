@@ -16,6 +16,10 @@
   --shadow-soft: 0 26px 74px rgba(91, 64, 35, 0.1);
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Schibsted Grotesk", "Segoe UI", sans-serif;
+  --glass:radial-gradient(circle at top, rgba(194, 154, 97, 0.12), transparent 28%),
+  radial-gradient(circle at 20% 20%,#f6f0e7, transparent 22%),
+  linear-gradient(180deg, rgba(255, 252, 245, 0.7), rgba(245, 238, 227, 0.8)),
+  #f6f0e7;
 }
 
 @theme inline {
