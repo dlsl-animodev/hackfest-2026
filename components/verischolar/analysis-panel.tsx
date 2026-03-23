@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CitationHealthRail } from "@/components/verischolar/citation-health-rail";
 import { SparkIcon } from "@/components/verischolar/icons";
+import { Sparkle } from 'lucide-react';
 import type { AnalysisActionState } from "@/lib/verischolar/action-state";
 import type { DashboardMetrics, SearchMode } from "@/lib/verischolar/types";
 
@@ -62,9 +63,9 @@ export function AnalysisPanel({
           <button
             type="submit"
             disabled={selectedSourceIds.length < 3 || isPending}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--ink)] px-4 py-3 text-sm text-[var(--bg)] shadow-[0_18px_44px_rgba(33,21,13,0.16)] transition-transform duration-300 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <SparkIcon className="h-4 w-4" />
+            <Sparkle className="h-4 w-4" />
             {isPending
               ? "Creating workplace session..."
               : "Run contradiction-aware synthesis"}

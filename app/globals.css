@@ -7,9 +7,10 @@
   --ink: #2f1d12;
   --muted: #786655;
   --accent: #a2774f;
+  --accent2: #f4ebe1;
   --positive: #5d7f63;
-  --warning: #b68043;
-  --danger: #8a4741;
+  --warning: #c87b44;
+  --danger: #d14b3e;
   --line: rgba(118, 96, 72, 0.14);
   --line-strong: rgba(118, 96, 72, 0.24);
   --shadow-soft: 0 26px 74px rgba(91, 64, 35, 0.1);

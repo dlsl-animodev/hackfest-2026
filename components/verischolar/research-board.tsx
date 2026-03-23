@@ -5,6 +5,7 @@ import {
   ShieldIcon,
 } from "@/components/verischolar/icons";
 import type { ResearchSource } from "@/lib/verischolar/types";
+import { Trash } from "lucide-react";
 
 type ResearchBoardProps = {
   selectedSources: ResearchSource[];
@@ -106,9 +107,9 @@ export function ResearchBoard({
                 <button
                   type="button"
                   onClick={() => onToggle(source.id)}
-                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-2 text-xs tracking-[0.14em] text-[var(--muted)]"
+                  className="shrink-0 rounded-full border border-[var(--line)] px-3 py-3 text-xs tracking-[0.14em] text-[var(--muted)] hover:bg-[var(--accent2)]"
                 >
-                  Remove
+                  <Trash className="h-4 w-4 text-[var(--accent)]" />
                 </button>
               </div>
             </div>

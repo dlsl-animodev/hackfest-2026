@@ -79,7 +79,7 @@ async function PageContent({ searchParams }: PageProps) {
         } as React.CSSProperties
       }
     >
-      <TopBar compact={hasQuery} />
+      <TopBar/>
 
       <main className="relative flex min-h-[calc(100vh-5rem)] flex-col">
         <Suspense fallback={<WorkspaceSkeleton />}>

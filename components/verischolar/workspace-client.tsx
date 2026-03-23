@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
+import { Search } from 'lucide-react';
 
 import { ResultCard } from "@/components/verischolar/result-card";
 import { getDashboardMetrics } from "@/lib/verischolar/citations";
@@ -82,7 +83,7 @@ export function WorkspaceClient({
           <p className="text-[0.84rem] tracking-[0.18em] text-[var(--muted)] uppercase">
             Query
           </p>
-          <h2 className="max-w-[35ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.9rem]">
+          <h2 className="max-w-[60ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.3rem]">
             {query}
           </h2>
           <div className="flex flex-wrap items-center gap-2 text-[0.84rem] text-[var(--muted)]">
@@ -163,13 +164,14 @@ export function WorkspaceClient({
             and recency so the strongest candidates surface faster.
           </p>
 
-          <button
-            type="button"
-            onClick={handleToggleLocalMode}
-            className="rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-[0.82rem] tracking-[0.12em] text-[var(--panel)] transition-colors duration-200 hover:border[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
-          >
-            {isLocalOnly ? "Show All Results" : "Find Local Papers"}
-          </button>
+     <button
+  type="button"
+  onClick={handleToggleLocalMode}
+  className="flex items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-sm text-[var(--panel)] transition-colors duration-200 hover:border-[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
+>
+  <Search className="h-4 w-4" />
+  {isLocalOnly ? "Show All Results" : "Find local papers"}
+</button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
