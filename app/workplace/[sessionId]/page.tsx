@@ -29,7 +29,7 @@ export default async function WorkplaceSessionPage({
       <TopBar compact={false} />
 
       <main className="mx-auto w-full max-w-[1120px] px-4 pb-10 pt-6 sm:px-6 lg:px-10">
-        <section className="rounded-[1.9rem] border border-[var(--line)] bg-[rgba(255,255,255,0.66)] p-5 shadow-[0_26px_64px_rgba(93,66,37,0.08)] sm:p-6">
+        <section className="mt-19 rounded-[1.9rem] border border-[var(--line)] bg-[rgba(255,255,255,0.66)] p-5 shadow-[0_26px_64px_rgba(93,66,37,0.08)] sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-xs tracking-[0.18em] text-[var(--muted)] uppercase">
