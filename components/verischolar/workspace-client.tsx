@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { m, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { m, useReducedMotion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-import { Search } from 'lucide-react';
+import { Search, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { ResultCard } from "@/components/verischolar/result-card";
 import { getDashboardMetrics } from "@/lib/verischolar/citations";
@@ -31,6 +31,10 @@ export function WorkspaceClient({
     fromCache,
     warnings,
   } = searchResponse;
+
+  const [isAutoShowing, setIsAutoShowing] = useState(true);
+  const [showWarnings, setShowWarnings] = useState(false);
+
   const reduceMotion = useReducedMotion();
   const selectedIds = useResearchBoardStore((state) => state.selectedIds);
   const toggleSource = useResearchBoardStore((state) => state.toggleSource);
@@ -41,6 +45,12 @@ export function WorkspaceClient({
 
   useEffect(() => {
     initializeBoard(query, sources);
+
+    const timer = setTimeout(() => {
+      setIsAutoShowing(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
   }, [initializeBoard, query, sources]);
 
   const selectedSources = sources.filter((source) =>
@@ -79,13 +89,18 @@ export function WorkspaceClient({
       animate={workspaceMotion.animate}
     >
       <div className="grid gap-4 rounded-[1.7rem] border border-[var(--line)] bg-[rgba(255,255,255,0.62)] px-4 py-4 shadow-[0_20px_54px_rgba(108,82,54,0.07)] sm:px-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.95fr)]">
-        <div className="space-y-4">
-          <p className="text-[0.84rem] tracking-[0.18em] text-[var(--muted)] uppercase">
-            Query
-          </p>
-          <h2 className="max-w-[60ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.3rem]">
-            {query}
-          </h2>
+        <div className="space-y-4 flex flex-col justify-between">
+
+          {/*Query*/}
+          <div className="flex flex-col space-y-4">
+            <p className="text-[0.84rem] tracking-[0.18em] text-[var(--muted)] uppercase">
+              Query
+            </p>
+            <h2 className="max-w-[60ch] text-[1.7rem] leading-[1.15] text-[var(--ink)] sm:text-[1.3rem]">
+              {query}
+            </h2>
+          </div>
+          
           <div className="flex flex-wrap items-center gap-2 text-[0.84rem] text-[var(--muted)]">
             {expandedQuery && expandedQuery !== query ? (
               <span className="rounded-full border border-[var(--line)] bg-[rgba(255,252,245,0.84)] px-5 py-3">
@@ -114,6 +129,7 @@ export function WorkspaceClient({
           ) : null}
         </div>
 
+        {/*Query Summary*/}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
           {[
             { label: "Sources", value: insightsLabel },
@@ -136,18 +152,44 @@ export function WorkspaceClient({
         </div>
       </div>
 
-      {warnings.length > 0 ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {warnings.map((warning) => (
-            <div
-              key={warning}
-              className="rounded-[1.3rem] border border-[rgba(182,131,67,0.2)] bg-[rgba(255,249,240,0.9)] px-4 py-3 text-sm leading-6 text-[color:rgba(93,66,37,0.88)]"
-            >
-              {warning}
+      {warnings.length > 0 && (
+        <div className="space-y-3">
+          {!isAutoShowing && (
+            <div className="flex items-center gap-4 px-1">
+              <button
+                onClick={() => setShowWarnings(!showWarnings)}
+                className="flex items-center gap-2 text-[0.7rem] font-bold tracking-[0.16em] uppercase text-[var(--muted)] hover:text-[var(--ink)] transition-colors px-1"
+              >
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                {showWarnings ? "Hide Warnings" : `Show Warnings (${warnings.length})`}
+                {showWarnings ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </button>
+
             </div>
-          ))}
+          )}
+
+          <AnimatePresence>
+            {(isAutoShowing || showWarnings) && (
+              <m.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="grid gap-3 lg:grid-cols-2 overflow-hidden"
+              >
+                {warnings.map((warning) => (
+                  <div
+                    key={warning}
+                    className="rounded-[1.3rem] border border-[rgba(182,131,67,0.2)] bg-[rgba(255,249,240,0.9)] px-4 py-3 text-sm leading-6 text-[color:rgba(93,66,37,0.88)]"
+                  >
+                    <AlertCircle className="w-4 h-4 mt-1 shrink-0 text-orange-500" />
+                    {warning}
+                  </div>
+                ))}
+              </m.div>
+            )}
+          </AnimatePresence>
         </div>
-      ) : null}
+      )}
 
       <div className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3 rounded-[1.5rem] border border-[var(--line)] bg-[rgba(255,255,255,0.5)] px-4 py-4 shadow-[0_18px_48px_rgba(94,68,44,0.05)]">
@@ -164,25 +206,43 @@ export function WorkspaceClient({
             and recency so the strongest candidates surface faster.
           </p>
 
-     <button
-  type="button"
-  onClick={handleToggleLocalMode}
-  className="flex items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-sm text-[var(--panel)] transition-colors duration-200 hover:border-[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
->
-  <Search className="h-4 w-4" />
-  {isLocalOnly ? "Show All Results" : "Find local papers"}
-</button>
+          <button
+            type="button"
+            onClick={handleToggleLocalMode}
+            className="flex items-center justify-center gap-2 rounded-full border border-[var(--line)] bg-[var(--ink)] px-4 py-2 text-sm text-[var(--panel)] transition-colors duration-200 hover:border-[var(--ink)] hover:bg-[var(--muted)] hover:text-[var(--panel)]"
+          >
+            <Search className="h-4 w-4" />
+            {isLocalOnly ? "Show All Results" : "Find local papers"}
+          </button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {sources.map((source) => (
-            <ResultCard
-              key={source.id}
-              source={source}
-              selected={selectedIds.includes(source.id)}
-              onToggle={toggleSource}
-            />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          <div className="grid gap-4">
+            {sources
+              .filter((_, i) => i % 2 === 0)
+              .map((source) => (
+              <ResultCard
+                key={source.id}
+                source={source}
+                selected={selectedIds.includes(source.id)}
+                onToggle={toggleSource}
+              />
+            ))}
+          </div>
+
+          <div className="grid gap-4">
+            {sources
+              .filter((_, i) => i % 2 !== 0)
+              .map((source) => (
+              <ResultCard
+                key={source.id}
+                source={source}
+                selected={selectedIds.includes(source.id)}
+                onToggle={toggleSource}
+              />
+            ))}
+          </div>
+
         </div>
       </div>
     </m.section>

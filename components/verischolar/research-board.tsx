@@ -87,15 +87,15 @@ export function ResearchBoard({
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 text-[0.76rem] text-[var(--muted)]">
                     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5">
-                      <BookIcon className="h-4 w-4 text-[var(--accent)]" />
+                      <BookIcon className="h-4 w-4 text-[var(--accent)] shrink-0" />
                       {source.journal ?? source.publisher ?? "Venue unknown"}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5">
-                      <GlobeIcon className="h-4 w-4 text-[var(--accent)]" />
+                      <GlobeIcon className="h-4 w-4 text-[var(--accent)] shrink-0" />
                       {source.localityLabel}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5">
-                      <ShieldIcon className="h-4 w-4 text-[var(--accent)]" />
+                      <ShieldIcon className="h-4 w-4 text-[var(--accent)] shrink-0" />
                       {source.credibility.label}
                     </span>
                     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] px-3 py-1.5">

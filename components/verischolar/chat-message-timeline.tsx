@@ -104,10 +104,10 @@ function AssistantTurnCard({
       >
         <div className="flex items-center gap-3">
           <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(162,119,79,0.16)] bg-[rgba(255,245,232,0.9)] text-[var(--accent)] shadow-[0_14px_34px_rgba(97,68,38,0.08)]">
-            <BrandGlyph className="h-5 w-5" />
+            <img src="/logo.svg" alt="veriScholar" className={"h-[1.5rem] w-[1.5rem]"}/>
           </span>
           <div>
-            <p className="text-[0.72rem] tracking-[0.18em] text-[var(--muted)] uppercase">
+            <p className="text-[0.72rem] tracking-[0.18em] text-[var(--muted)] uppercase font-bold">
               VeriScholar
             </p>
             <p className="mt-1 text-sm text-[color:rgba(82,67,56,0.88)]">
